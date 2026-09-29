@@ -48,6 +48,20 @@ Schema and fixture, authorized separately from Phase 1 documentation.
 
 `expected_partition` now covers claims only. Eligibility arrives as spans that cross months, so a market-month expectation does not describe how it is delivered; its absence is a missing file rather than a missing partition.
 
+## Phase 2c, the KPI layer (2026-09-29)
+
+`sql/kpis/` in three files, created as views on every run so a definition change cannot leave a stale materialised copy claiming to be current.
+
+- `100_components.sql` aggregates exposure and claims to the reporting grain separately, before anything joins them. Joining claim lines to member months and then summing membership repeats a member once per line, which inflates a denominator plausibly and reconciles to nothing.
+- `200_kpi_month.sql` assembles K01, K02, K04 to K08 at month by market for the FFS primary cohort, K10 and K11 for managed care in a separate view, and K03 over the period.
+- `300_kpi_category.sql` gives K09 and the category contribution to PMPM.
+
+Every ratio is computed from summed components, none is stored, and none is an average of other ratios. Every ratio returns NULL on a zero denominator rather than zero or infinity. Numerator and denominator sit beside every rate so a reader can reproduce the arithmetic and a dashboard cannot show a rate whose components it never received.
+
+**A gap was found and closed while building this.** The KPI views initially reported market C's February FFS spend as $0.00, because a market that spent nothing and a market whose feed never arrived both produce no claim rows. The release gate blocked publication, but a consumer reading the view directly would have published that zero. `v_partition_status` now travels with every measure, carrying `AVAILABLE`, `UNAVAILABLE_PARTITION` or `UNAVAILABLE_RUN`. A blocking failure scoped to the whole run makes every partition unavailable, because a defect nobody has localised could be anywhere.
+
+**A known interaction, currently harmless.** A claim whose lines did not all map contributes to K06 (it is an accepted claim) but not to K04 (its dollars come from lines). K08 is therefore understated for that market-month. The release is blocked by `DQ_LINE_UNMAPPED_SERVICE_CODE` whenever this happens, so no published figure is affected, but the two measures disagree in the unpublished view and a future reader should not be surprised by it.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
@@ -97,12 +111,20 @@ Added for resolution and quality rules:
 - Test pollution was found and fixed: one test deleted `dq_result` and re-ran the pipeline against the shared database, corrupting every test ordered after it. It now builds its own database.
 - Three schema-refusal tests were found to be passing for the wrong reason. They referenced a source file that no longer existed, so a foreign key failed before the constraint under test. They now look up a real file id.
 
-Still unverified: no KPI, mart, variance calculation or release logic has been executed. The anomaly thresholds remain untested against generated data.
+Added for the KPI layer:
+
+- `python -m pytest tests -q` passes 67 tests across three files.
+- Acceptance examples 1, 2, 4, 5 and 7 are now executable tests rather than prose. Example 1 checks PMPM divides by covered exposure and not by claimants, with one claimant among three covered members. Example 2 checks that combining markets sums components, and asserts the averaged answer differs so the test cannot pass by coincidence. Example 4 checks a two-line claim is one claim and the sum of its lines while appearing under both categories. Example 5 checks capitation and encounters stay out of FFS spend. Example 7 checks a failed feed reads as unavailable rather than zero.
+- Figures were read back and checked: category shares reconcile to exactly 100% in every market-month, and category contributions sum to the market-month PMPM to six decimal places. January market A is $23.33 outpatient plus $16.67 professional against a $40.00 PMPM.
+- K03 returns NULL for market B FFS, which has exposure in one month of two. Dividing by the months that happened to appear would report an average the period does not support.
+- Two mutation checks. Returning 0 instead of NULL for a zero denominator fails exactly the test covering it. Taking spend from claim headers rather than lines fails both category reconciliation tests, which is the intended tripwire for that error.
+
+Still unverified: no mart, variance calculation, release manifest or export has been executed. The anomaly thresholds remain untested against generated data.
 
 ## Next steps
 
 1. Clone the private repository using an authorized GitHub account, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
-2. Schema, fixture, resolution and quality rules are done. The next unit is the KPI layer: implement K01 through K09 as views over the curated facts, aggregating exposure and claims separately before joining so a claim line cannot repeat a member month, and computing every ratio from summed components rather than averaging ratios. Acceptance examples 1, 2, 4, 5, 6 and 7 become the tests. Keep the variance bridge, anomaly rule, marts and release manifest out of that task.
+2. Schema, fixture, resolution, quality rules and the KPI layer are done. The next unit is the spend variance bridge: K13 month over month, with the membership and PMPM effects that reconcile to the spend change, and market and category contributions at disjoint grains. The worked example in kpi_dictionary.md and the ordering note about the interaction term are the specification. Keep the statistical anomaly rule out of it until there is a longer generated history to tune the two thresholds against.
 3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
 4. Keep Power BI, statistical anomaly routines, automation, and AI outside that task unless explicitly included.
 5. When the anomaly rule is eventually implemented, test it against deliberately quiet histories, meaningful shifts, and incomplete periods before any alert reaches a dashboard. Acceptance examples 8, 9 and 10 exist for exactly those three cases. Tuning the two thresholds is part of that work, not a prerequisite to it.

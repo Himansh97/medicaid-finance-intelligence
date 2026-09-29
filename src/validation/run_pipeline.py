@@ -28,6 +28,7 @@ from src.data_generation.build_fixture import DEFAULT_DB, connect
 ROOT = Path(__file__).resolve().parents[2]
 TRANSFORM_DIR = ROOT / "sql" / "transformations"
 QUALITY_DIR = ROOT / "sql" / "quality"
+KPI_DIR = ROOT / "sql" / "kpis"
 
 
 def _statements(sql: str):
@@ -61,6 +62,10 @@ def run(db_path: Path, run_id: str = fx.RUN_ID) -> dict:
         )
         transforms = _apply(conn, TRANSFORM_DIR, params)
         rules = _apply(conn, QUALITY_DIR, params)
+        # Views, not tables. They are defined after the facts exist and are
+        # recreated on every run, so a definition change cannot leave a stale
+        # materialised copy behind claiming to be current.
+        kpis = _apply(conn, KPI_DIR, params)
 
         failures = conn.execute(
             "SELECT rule_id, market_id, month_start, failing_row_count "
@@ -89,6 +94,7 @@ def run(db_path: Path, run_id: str = fx.RUN_ID) -> dict:
             "status": status,
             "transforms": transforms,
             "rules": rules,
+            "kpis": kpis,
             "counts": counts,
             "failures": failures,
         }
@@ -107,7 +113,7 @@ def main(argv=None) -> int:
 
     result = run(args.db)
     print(f"applied {len(result['transforms'])} transformations, "
-          f"{len(result['rules'])} quality files")
+          f"{len(result['rules'])} quality files, {len(result['kpis'])} KPI files")
     for table in sorted(result["counts"]):
         print(f"  {result['counts'][table]:>4}  {table}")
 
