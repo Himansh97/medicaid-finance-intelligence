@@ -29,15 +29,18 @@ ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_DIR = ROOT / "sql" / "schema"
 DEFAULT_DB = ROOT / "data" / "processed" / "fixture.db"
 
-# Which fixture rows belong to which landed file. Splitting claims by market is
-# what makes a missing market feed expressible: the February market C file is
-# simply never created.
-FILES = [
-    ("SRC_ELIG_2026Q1", "eligibility", None),
-    ("SRC_CLAIMS_2026Q1", "claims", None),
-    ("SRC_PAY_2026Q1", "payments", None),
-    ("SRC_CAP_2026Q1", "capitation", None),
-]
+# Claims land one file per market-month, which is what makes a missing feed
+# expressible: the February market C file is simply never created, while the
+# February market B file is created holding nothing. Eligibility, payments and
+# capitation arrive as single files because spans and transactions are not
+# partitioned by service month.
+ELIG_FILE = "SRC_ELIG_2026Q1"
+PAY_FILE = "SRC_PAY_2026Q1"
+CAP_FILE = "SRC_CAP_2026Q1"
+
+
+def claims_file_id(market_id: str, month_start: str) -> str:
+    return f"SRC_CLAIMS_{market_id}_{month_start}"
 
 
 def connect(path: Path) -> sqlite3.Connection:
@@ -83,24 +86,29 @@ def load(conn: sqlite3.Connection) -> dict[str, int]:
     )
     counts["pipeline_run"] = 1
 
-    raw = {
-        "eligibility": fx.raw_eligibility_rows,
-        "claims": None,
-        "payments": fx.raw_payment_rows,
-        "capitation": fx.raw_capitation_rows,
-    }
-
-    for file_id, entity, market_id in FILES:
-        if entity == "claims":
-            rows = fx.raw_claim_header_rows(file_id) + fx.raw_claim_line_rows(file_id)
-        else:
-            rows = raw[entity](file_id)
+    def register(file_id, entity, rows, market_id=None, month_start=None):
         conn.execute(
-            "INSERT INTO source_file VALUES (?,?,?,?,?,?,?,?)",
-            (file_id, fx.RUN_ID, "synthetic", entity, market_id,
+            "INSERT INTO source_file VALUES (?,?,?,?,?,?,?,?,?)",
+            (file_id, fx.RUN_ID, "synthetic", entity, market_id, month_start,
              _hash(rows), len(rows), fx.INGESTED_AT),
         )
         counts["source_file"] = counts.get("source_file", 0) + 1
+
+    register(ELIG_FILE, "eligibility", fx.raw_eligibility_rows(ELIG_FILE))
+    register(PAY_FILE, "payments", fx.raw_payment_rows(PAY_FILE))
+    register(CAP_FILE, "capitation", fx.raw_capitation_rows(CAP_FILE))
+
+    claim_headers, claim_lines = [], []
+    for market_id, month_start in fx.ARRIVING_CLAIMS_PARTITIONS:
+        file_id = claims_file_id(market_id, month_start)
+        headers = fx.raw_claim_header_rows(file_id, market_id, month_start)
+        lines = fx.raw_claim_line_rows(file_id, market_id, month_start)
+        # Registered even when it holds nothing. An empty arriving file is a
+        # complete report of a quiet month, and it is the only thing that
+        # distinguishes that from a feed which never came.
+        register(file_id, "claims", headers + lines, market_id, month_start)
+        claim_headers += headers
+        claim_lines += lines
 
     insert("dim_market", fx.MARKETS)
     insert("dim_member", fx.MEMBERS)
@@ -110,11 +118,11 @@ def load(conn: sqlite3.Connection) -> dict[str, int]:
     insert("service_category_map", fx.CATEGORY_MAP)
     insert("dim_date", fx.dim_date_rows())
 
-    insert("raw_eligibility_span", fx.raw_eligibility_rows("SRC_ELIG_2026Q1"))
-    insert("raw_claim_header", fx.raw_claim_header_rows("SRC_CLAIMS_2026Q1"))
-    insert("raw_claim_line", fx.raw_claim_line_rows("SRC_CLAIMS_2026Q1"))
-    insert("raw_payment_transaction", fx.raw_payment_rows("SRC_PAY_2026Q1"))
-    insert("raw_capitation_transaction", fx.raw_capitation_rows("SRC_CAP_2026Q1"))
+    insert("raw_eligibility_span", fx.raw_eligibility_rows(ELIG_FILE))
+    insert("raw_claim_header", claim_headers)
+    insert("raw_claim_line", claim_lines)
+    insert("raw_payment_transaction", fx.raw_payment_rows(PAY_FILE))
+    insert("raw_capitation_transaction", fx.raw_capitation_rows(CAP_FILE))
 
     insert("expected_partition", fx.expected_partitions())
     insert("expected_defect", [(fx.SCENARIO_ID, *d) for d in fx.EXPECTED_DEFECTS])

@@ -27,11 +27,20 @@ CREATE TABLE source_file (
     source_system     TEXT    NOT NULL DEFAULT 'synthetic'
         CHECK (source_system = 'synthetic'),
     entity            TEXT    NOT NULL,
+    -- A file is the evidence that a feed arrived. Market and month are recorded
+    -- here so that arrival can be established independently of whether the file
+    -- contained any rows: a market with a quiet month sends an empty file, and a
+    -- market that failed sends nothing. Inferring arrival from row counts cannot
+    -- tell those apart, and the difference between zero and unavailable is the
+    -- one this project exists to preserve.
     market_id         TEXT,
+    month_start       TEXT,
     content_hash      TEXT    NOT NULL,
     row_count         INTEGER NOT NULL CHECK (row_count >= 0),
     ingested_at       TEXT    NOT NULL
 );
+
+CREATE INDEX idx_source_file_partition ON source_file (entity, market_id, month_start);
 
 -- The market-month feeds a release is expected to contain. Without this, a market
 -- that never arrives is indistinguishable from a market with nothing to report,

@@ -37,6 +37,17 @@ Schema and fixture, authorized separately from Phase 1 documentation.
 - Raw tables accept defects deliberately. A fixture unable to express a duplicate or an orphan cannot demonstrate that a rule catches one. `expected_defect` declares the three planted defects so a later test can assert each was caught; the pipeline never reads it.
 - An eleventh case beyond the architecture's ten was added: a line carrying `SVC_UNMAPPED_99`, absent from the category map, because unmapped lines are documented as blocking a release and a map with no gap cannot demonstrate that.
 
+## Phase 2b, resolution and quality rules (2026-09-29)
+
+- `sql/transformations/` in five ordered files: eligibility spans deduplicated on the business key, member months built from a union of covered days, claim versions loaded with replacement chains resolved, finals selected, signed ledgers loaded.
+- `sql/quality/` in three files: structural, population and financial rules, each writing a `dq_result` row per evaluated partition.
+- `src/validation/run_pipeline.py` applies both in order and sets the run status. It never certifies; a release manifest and finance approval are a later task.
+- The fixture run ends `FAILED`, which is the controls working. Exactly the three declared defects fail and nothing else.
+
+**A rule was wrong and has been corrected.** `DQ_MISSING_MARKET_FEED` originally inferred that a feed had arrived from the presence of claim rows. That made a market with a genuinely quiet month indistinguishable from a market whose feed failed, and it flagged market B's February as missing when market B simply had no February claims. The rule now establishes arrival from `source_file`, which gained `market_id` and `month_start` for the purpose. The fixture demonstrates both sides: market B sends an empty February file that must pass, market C sends none and must block. `NON_DEFECT_CONTROLS` records the empty file as a deliberate non-defect, because a rule could otherwise satisfy the missing-feed case by failing every empty partition.
+
+`expected_partition` now covers claims only. Eligibility arrives as spans that cross months, so a market-month expectation does not describe how it is delivered; its absence is a missing file rather than a missing partition.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
@@ -77,12 +88,21 @@ Added for the schema and fixture:
 - The refusal tests were mutation-checked: weakening the member-month weight constraint fails exactly the test covering it, and restoring it returns the suite to green. A constraint nobody has tried to violate is a comment.
 - Two errors were found and fixed during this work. Column definitions had been placed after table-level `CHECK` clauses in four tables, which is not valid SQL. Column counts in the loader were hardcoded and one was wrong; the loader now derives them from `PRAGMA table_info` so that failure cannot recur.
 
-Still unverified: no transformation, quality rule or KPI has been executed. The curated tables are created empty by design, and a test asserts they stay empty so the build cannot silently begin populating them.
+Added for resolution and quality rules:
+
+- `python -m src.validation.run_pipeline` applies five transformations and three quality files, producing 7 spans, 11 member months, 9 claim versions, 5 final claims, 8 payment and 4 capitation rows, and 14 rule results.
+- `python -m pytest tests -q` passes 51 tests across both files.
+- Resolution figures were read back and checked by hand: the replacement family resolves to $120 once rather than $220 or twice; the voided and denied families are absent from the finals while their versions remain for the ledger to reference; the ledger equals the final balance for every family including the voided one at zero; capitation lands at the corrected $475 attributed to coverage month rather than payment month; primary-cohort member months are 7 FFS and 2 managed care, with the CHIP member excluded.
+- Two mutation checks were run rather than assumed. Removing the constraint that an accepted FFS claim must state a paid amount fails exactly the test covering it. Reverting `DQ_MISSING_MARKET_FEED` to infer arrival from row counts fails exactly the two tests guarding the zero-versus-unavailable distinction.
+- Test pollution was found and fixed: one test deleted `dq_result` and re-ran the pipeline against the shared database, corrupting every test ordered after it. It now builds its own database.
+- Three schema-refusal tests were found to be passing for the wrong reason. They referenced a source file that no longer existed, so a foreign key failed before the constraint under test. They now look up a real file id.
+
+Still unverified: no KPI, mart, variance calculation or release logic has been executed. The anomaly thresholds remain untested against generated data.
 
 ## Next steps
 
 1. Clone the private repository using an authorized GitHub account, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
-2. The fixture and schema are done. The next unit is resolution: build `eligibility_span` and `fact_member_month` from the raw spans, deduplicating the planted duplicate without creating a second member month; resolve claim version chains into `fact_claim_header_final`, excluding the denied and voided families; then reconcile the signed ledger to final claim balances at cent level. Quality rules for the three declared defects belong with it, and each should be asserted against `expected_defect` rather than assumed.
+2. Schema, fixture, resolution and quality rules are done. The next unit is the KPI layer: implement K01 through K09 as views over the curated facts, aggregating exposure and claims separately before joining so a claim line cannot repeat a member month, and computing every ratio from summed components rather than averaging ratios. Acceptance examples 1, 2, 4, 5, 6 and 7 become the tests. Keep the variance bridge, anomaly rule, marts and release manifest out of that task.
 3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
 4. Keep Power BI, statistical anomaly routines, automation, and AI outside that task unless explicitly included.
 5. When the anomaly rule is eventually implemented, test it against deliberately quiet histories, meaningful shifts, and incomplete periods before any alert reaches a dashboard. Acceptance examples 8, 9 and 10 exist for exactly those three cases. Tuning the two thresholds is part of that work, not a prerequisite to it.

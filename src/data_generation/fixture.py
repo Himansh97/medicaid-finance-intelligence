@@ -194,12 +194,43 @@ _LINES = [
 ]
 
 
-def raw_claim_header_rows(file_id):
-    return [(file_id, r[0], RUN_ID, INGESTED_AT, *r[1:]) for r in _HEADERS]
+def raw_claim_header_rows(file_id, market_id=None, month_start=None):
+    rows = _HEADERS
+    if market_id is not None:
+        rows = [r for r in rows
+                if r[5] == market_id and _month_of(r[11]) == month_start]
+    return [(file_id, r[0], RUN_ID, INGESTED_AT, *r[1:]) for r in rows]
 
 
-def raw_claim_line_rows(file_id):
-    return [(file_id, r[0], RUN_ID, INGESTED_AT, *r[1:]) for r in _LINES]
+def raw_claim_line_rows(file_id, market_id=None, month_start=None):
+    rows = _LINES
+    if market_id is not None:
+        families = {
+            (r[1], r[2]) for r in _HEADERS
+            if r[5] == market_id and _month_of(r[11]) == month_start
+        }
+        rows = [r for r in rows if (r[1], r[2]) in families]
+    return [(file_id, r[0], RUN_ID, INGESTED_AT, *r[1:]) for r in rows]
+
+
+def _month_of(service_end_date):
+    return service_end_date[:7] + "-01"
+
+
+# Which claims feeds arrive, and which does not.
+#
+# Market B sends its February file containing nothing, because it had no claims
+# that month. Market C sends no February file at all, because its feed failed.
+# Both look like zero rows; only the file distinguishes them, and the difference
+# decides whether a cross-market total is publishable or unavailable.
+ARRIVING_CLAIMS_PARTITIONS = [
+    ("SYN_MKT_A", "2026-01-01"),
+    ("SYN_MKT_A", "2026-02-01"),
+    ("SYN_MKT_B", "2026-01-01"),
+    ("SYN_MKT_B", "2026-02-01"),   # arrives empty: a genuinely quiet month
+    ("SYN_MKT_C", "2026-01-01"),
+    # ("SYN_MKT_C", "2026-02-01") is deliberately absent.
+]
 
 
 # --------------------------------------------------------------------------
@@ -249,17 +280,21 @@ def raw_capitation_rows(file_id):
 # --------------------------------------------------------------------------
 
 def expected_partitions():
-    """Every market-month feed a complete release would contain.
+    """Every claims feed a complete release would contain.
+
+    Claims are delivered per market-month, so that is the grain an expectation
+    can be checked at. Eligibility arrives as spans that cross months and is not
+    month-partitioned, so it is not expected here; its absence is a missing file
+    rather than a missing partition.
 
     Market C has no claims file for February. Because the expectation is recorded
     here, that absence is a blocking failure rather than a month that looks quiet.
     """
-    rows = []
-    for _, market_id, _, _ in MARKETS:
-        for month in MONTHS:
-            for entity in ("eligibility", "claims"):
-                rows.append((RUN_ID, market_id, month, entity))
-    return rows
+    return [
+        (RUN_ID, market_id, month, "claims")
+        for _, market_id, _, _ in MARKETS
+        for month in MONTHS
+    ]
 
 
 # Declared so a test can assert each defect was actually caught. Never read by
@@ -272,6 +307,14 @@ EXPECTED_DEFECTS = [
      "SVC_UNMAPPED_99 is absent from the category map; unmapped lines block the release"),
     ("D03", "expected_partition", None, "DQ_MISSING_MARKET_FEED",
      "Market SYN_MKT_C has no claims feed for 2026-02; the all-market total is unavailable, not smaller"),
+]
+
+# Not a defect. Market B's February claims file arrives carrying nothing, which
+# is a complete report of a quiet month and must pass. It is the control for D03:
+# without it, a rule could satisfy D03 by failing every empty partition.
+NON_DEFECT_CONTROLS = [
+    ("C01", "source_file", "SRC_CLAIMS_SYN_MKT_B_2026-02-01",
+     "an empty arriving feed is zero activity, not a missing feed, and must not block"),
 ]
 
 # What each of the architecture's ten cases is represented by, so a test can

@@ -163,26 +163,31 @@ class TestSchemaRefusals(FixtureTestCase):
         self.assertRejected(
             "INSERT INTO dim_plan VALUES (99, 999, 'SYN_X', 'x', 'MANAGED_CARE')")
 
+    def claims_file(self):
+        # A real file id, so these tests fail on the CHECK under test rather than
+        # on a foreign key that fires first.
+        return self.one("SELECT source_file_id FROM source_file WHERE entity='claims' LIMIT 1")
+
     def test_accepted_ffs_claim_must_state_what_medicaid_paid(self):
         self.assertRejected(
             "INSERT INTO claim_header_version VALUES "
             "(900,?,'SYN_CX',1,NULL,1,1,1,'OT','FFS','ACCEPTED',"
-            "'2026-01-01','2026-01-01','2026-01-01',NULL,'SRC_CLAIMS_2026Q1','X')",
-            fx.RUN_ID)
+            "'2026-01-01','2026-01-01','2026-01-01',NULL,?,'X')",
+            fx.RUN_ID, self.claims_file())
 
     def test_a_terminal_claim_balance_cannot_be_negative(self):
         self.assertRejected(
             "INSERT INTO claim_header_version VALUES "
             "(901,?,'SYN_CY',1,NULL,1,1,1,'OT','FFS','ACCEPTED',"
-            "'2026-01-01','2026-01-01','2026-01-01',-500,'SRC_CLAIMS_2026Q1','Y')",
-            fx.RUN_ID)
+            "'2026-01-01','2026-01-01','2026-01-01',-500,?,'Y')",
+            fx.RUN_ID, self.claims_file())
 
     def test_service_dates_must_be_ordered(self):
         self.assertRejected(
             "INSERT INTO claim_header_version VALUES "
             "(902,?,'SYN_CZ',1,NULL,1,1,1,'OT','FFS','ACCEPTED',"
-            "'2026-01-20','2026-01-10','2026-01-20',100,'SRC_CLAIMS_2026Q1','Z')",
-            fx.RUN_ID)
+            "'2026-01-20','2026-01-10','2026-01-20',100,?,'Z')",
+            fx.RUN_ID, self.claims_file())
 
     def test_a_reversal_must_reference_what_it_reverses(self):
         self.assertRejected(
@@ -245,16 +250,17 @@ class TestSchemaRefusals(FixtureTestCase):
     def test_a_claim_family_cannot_repeat_a_version_number(self):
         # The curated table is empty until resolution runs, so the first version
         # has to be written here before a duplicate can collide with it.
+        src = self.one("SELECT source_file_id FROM source_file WHERE entity='claims' LIMIT 1")
         self.conn.execute(
             "INSERT INTO claim_header_version VALUES "
             "(903,?,'SYN_CDUP',1,NULL,1,1,1,'OT','FFS','ACCEPTED',"
-            "'2026-01-10','2026-01-10','2026-01-10',12000,'SRC_CLAIMS_2026Q1','D1')",
-            (fx.RUN_ID,))
+            "'2026-01-10','2026-01-10','2026-01-10',12000,?,'D1')",
+            (fx.RUN_ID, src))
         self.assertRejected(
             "INSERT INTO claim_header_version VALUES "
             "(904,?,'SYN_CDUP',1,NULL,1,1,1,'OT','FFS','ACCEPTED',"
-            "'2026-01-10','2026-01-10','2026-01-10',12000,'SRC_CLAIMS_2026Q1','D2')",
-            fx.RUN_ID)
+            "'2026-01-10','2026-01-10','2026-01-10',12000,?,'D2')",
+            fx.RUN_ID, src)
 
 
 class TestCuratedLayerIsEmpty(FixtureTestCase):
