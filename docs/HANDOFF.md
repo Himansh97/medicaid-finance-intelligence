@@ -25,6 +25,18 @@ Revised after review on 2026-09-29:
 
 Read the four design documents in the order above. They are the project specification; no prior chat access is needed to understand the current design.
 
+## Phase 2a, first implementation (2026-09-29)
+
+Schema and fixture, authorized separately from Phase 1 documentation.
+
+- `sql/schema/` applies in numeric order: operational entities, raw landing tables, dimensions, exposure, claims, financial ledgers. `sql/schema/README.md` records the engine decision and the one storage departure from the data dictionary.
+- **SQLite is the development engine, PostgreSQL remains the deployment target.** No Postgres is installed on the development machine and the fixture must run for any reviewer without setup. The DDL stays inside the intersection of both engines where that costs nothing.
+- **Money is stored as signed integer cents**, not `DECIMAL(18,2)`. SQLite has no decimal type and would store a float, which cannot represent most cent values exactly. This project blocks a release on cent-level disagreement, so an approximate representation would undermine the control it exists to test. This is a storage decision; no KPI definition changes.
+- `src/data_generation/fixture.py` holds the fixture as hand-written rows with no randomness. `CASE_COVERAGE` maps each of the ten cases named in architecture.md to the row that represents it, so a test can assert the fixture has not lost one.
+- `src/data_generation/build_fixture.py` creates the database, applies the schema and loads reference data plus the raw landing tables. The database is a derived artifact under `data/processed/` and is not committed.
+- Raw tables accept defects deliberately. A fixture unable to express a duplicate or an orphan cannot demonstrate that a rule catches one. `expected_defect` declares the three planted defects so a later test can assert each was caught; the pipeline never reads it.
+- An eleventh case beyond the architecture's ten was added: a line carrying `SVC_UNMAPPED_99`, absent from the category map, because unmapped lines are documented as blocking a release and a map with no gap cannot demonstrate that.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
@@ -57,10 +69,20 @@ Added during the 2026-09-29 review:
 
 These remain documentation and arithmetic checks. No KPI has been executed against a database, and the anomaly thresholds have not been tested against generated data.
 
+Added for the schema and fixture:
+
+- `python -m src.data_generation.build_fixture` builds the database from an empty file, applying six schema files and loading 138 rows across 16 tables.
+- `python -m pytest tests -q` passes 26 tests. The same file also runs under `python tests/test_fixture_and_schema.py`.
+- Most of those tests write a forbidden row and assert the database refuses it: foreign-key enforcement, an accepted FFS claim with no paid amount, a negative terminal balance, unordered service dates, an unreferenced reversal, a positive reversal, unlinked negative capitation, a member month weighted other than 1, CHIP inside the primary cohort, two assignments for one member in one month, out-of-range eligible days, and a repeated claim version.
+- The refusal tests were mutation-checked: weakening the member-month weight constraint fails exactly the test covering it, and restoring it returns the suite to green. A constraint nobody has tried to violate is a comment.
+- Two errors were found and fixed during this work. Column definitions had been placed after table-level `CHECK` clauses in four tables, which is not valid SQL. Column counts in the loader were hardcoded and one was wrong; the loader now derives them from `PRAGMA table_info` so that failure cannot recur.
+
+Still unverified: no transformation, quality rule or KPI has been executed. The curated tables are created empty by design, and a test asserts they stay empty so the build cannot silently begin populating them.
+
 ## Next steps
 
 1. Clone the private repository using an authorized GitHub account, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
-2. On a new request to implement, confirm or state the proposed finance conventions and select a small scope: synthetic fixtures, SQL warehouse, and deterministic quality/KPI checks.
+2. The fixture and schema are done. The next unit is resolution: build `eligibility_span` and `fact_member_month` from the raw spans, deduplicating the planted duplicate without creating a second member month; resolve claim version chains into `fact_claim_header_final`, excluding the denied and voided families; then reconcile the signed ledger to final claim balances at cent level. Quality rules for the three declared defects belong with it, and each should be asserted against `expected_defect` rather than assumed.
 3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
 4. Keep Power BI, statistical anomaly routines, automation, and AI outside that task unless explicitly included.
 5. When the anomaly rule is eventually implemented, test it against deliberately quiet histories, meaningful shifts, and incomplete periods before any alert reaches a dashboard. Acceptance examples 8, 9 and 10 exist for exactly those three cases. Tuning the two thresholds is part of that work, not a prerequisite to it.
