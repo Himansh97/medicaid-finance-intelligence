@@ -1,0 +1,14 @@
+# Local secrets and runtime artifacts
+.env
+.env.*
+!.env.example
+__pycache__/
+.venv/
+.DS_Store
+# Future generated data stays local; preserve directory placeholders.
+data/raw/*
+!data/raw/.gitkeep
+data/synthetic/*
+!data/synthetic/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
