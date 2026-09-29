@@ -15,11 +15,13 @@ Repository: [Himansh97/medicaid-finance-intelligence](https://github.com/Himansh
 ```text
 medicaid-finance-intelligence/
 ├── README.md
+├── AGENTS.md
 ├── docs/
 │   ├── business_requirements.md
 │   ├── kpi_dictionary.md
 │   ├── data_dictionary.md
-│   └── architecture.md
+│   ├── architecture.md
+│   └── HANDOFF.md
 ├── data/{raw,synthetic,processed}/
 ├── sql/{schema,transformations,quality,kpis}/
 ├── src/{data_generation,validation,analytics,ai}/

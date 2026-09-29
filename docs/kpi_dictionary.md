@@ -51,7 +51,22 @@ Market and category contributions use current minus prior spend at disjoint grai
 
 Proposed deterministic materiality flag: absolute FFS spend change at least $10,000 **and** absolute percentage change at least 10%, with positive prior spend. New activity from a zero baseline is flagged separately if current spend is at least $10,000. Thresholds are configurable portfolio assumptions.
 
-A later statistical candidate rule may compare monthly PMPM against the immediately preceding 12 certified consecutive service months for the same cohort. Proposed score: 0.6745 × (current − median) / MAD, where MAD is median absolute deviation. Flag absolute score > 3.5 only with current MM ≥ 100 and complete comparable history. Missing history, MAD = 0, or a definition change produces “not evaluated”; do not divide by zero or manufacture a baseline. No seasonal adjustment or predictive accuracy is claimed. Provisional periods are ineligible for statistical flags until finance marks them comparison-ready. This rule is documented only, not implemented.
+A later statistical candidate rule may compare monthly PMPM against the immediately preceding 12 certified consecutive service months for the same cohort. Proposed score: 0.6745 × (current − median) / MAD, where MAD is median absolute deviation.
+
+A candidate requires **both** conditions, not either one:
+
+1. Absolute score > 3.5.
+2. Estimated financial impact ≥ $10,000, where impact = |current PMPM − historical median PMPM| × current member months.
+
+The second condition exists because the score measures distance in units of historical dispersion, and a quiet history makes that unit small. Where MAD is $0.05, a move of $0.26 PMPM scores above 3.5, which on a $200 PMPM is a 0.13% change and not worth a finance analyst's attention. Measuring impact against the same median the score uses keeps the two conditions on one baseline. The $10,000 figure is a proposed portfolio setting to be tested against real generated histories, not an established Medicaid standard, and it is deliberately the same figure the deterministic materiality flag uses so the two can be compared and tuned together.
+
+Additional gates: current MM ≥ 100, and complete comparable history. Missing history, MAD = 0, or a definition change produces “not evaluated”; do not divide by zero or manufacture a baseline. No seasonal adjustment or predictive accuracy is claimed.
+
+**Comparison-ready months only.** Statistical detection applies to months finance has marked comparison-ready. A provisional month is not eligible, because incomplete claims development produces movement that is real in the data and misleading as a finding. Passing every data-quality check does not mean claims are fully developed; the checks test whether records are internally consistent, not whether the period has finished paying.
+
+Provisional months instead receive a separately labeled **preliminary movement advisory**, which is not an anomaly flag. It carries the as-of cutoff, the provisional status, the observed movement, and a statement that the period remains subject to claims development. It never produces a statistical score, never enters anomaly counts, and must not be presented in the same visual component as a comparison-ready flag. This keeps recent months visible to finance without lending them a confidence the underlying data does not support.
+
+This rule is documented only, not implemented.
 
 ## Acceptance examples for later implementation
 
@@ -62,5 +77,8 @@ A later statistical candidate rule may compare monthly PMPM against the immediat
 5. $50,000 capitation plus $40,000 encounter amounts produces $50,000 capitation, not $90,000 spend; encounters still contribute utilization.
 6. A member eligible for one day contributes 1 MM; duplicate spans do not create a second MM.
 7. A failed market feed makes the selected all-market total unavailable, rather than shrinking spend silently.
+8. A quiet history of twelve months alternating $199.95 and $200.05 PMPM has median $200.00 and MAD $0.05. A current month of $200.40 on 1,000 MM scores 5.4 and carries $400 of impact. No candidate: the score condition passes and the materiality condition fails, which is the case this rule exists to suppress.
+9. The same quiet history with a current month of $215.00 on 1,000 MM scores 202.3 and carries $15,000 of impact. Candidate raised: both conditions pass.
+10. A provisional month showing a large movement produces a preliminary movement advisory carrying its cutoff and provisional status, and produces no statistical score and no anomaly flag, even when every data-quality rule for that month passes.
 
-These examples specify future tests. They have not been run against a database.
+These examples specify future tests. They have not been run against a database. Examples 8 and 9 exist to test the rule against a deliberately quiet history in both directions; example 10 tests an incomplete period. Test all three before any alert reaches a dashboard.
