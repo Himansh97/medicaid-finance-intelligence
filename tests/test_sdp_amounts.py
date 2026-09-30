@@ -179,8 +179,10 @@ class TestAgainstDownloadedPreprints(unittest.TestCase):
         # Collapsing these two would let a drop in extraction quality hide
         # behind CMS's own omissions.
         self.assertGreater(self.summary["no_amount_stated_by_cms"], 0)
+        # Scoped to approval letters: the other two document categories cannot
+        # carry an approved amount, so folding them in would flatter the rate.
         self.assertEqual(
-            self.summary["evaluated"],
+            self.summary["approvals"],
             self.summary["anchored"] + self.summary["no_amount_stated_by_cms"]
             + self.summary["unresolved"])
 
@@ -195,7 +197,22 @@ class TestAgainstDownloadedPreprints(unittest.TestCase):
         for r in self.summary["records"]:
             if r["amount_cents"] is not None:
                 self.assertIsInstance(r["amount_cents"], int)
-                self.assertGreater(r["amount_cents"], 0)
+                self.assertGreaterEqual(r["amount_cents"], 0)
+
+    def test_a_zero_is_only_ever_a_phase_down_cap(self):
+        # Two Massachusetts documents state "total dollar amount of $0". Both are
+        # grandfathering determinations under Public Law 119-21, where $0 is a
+        # ceiling the arrangement may not exceed. A $0 sitting among approvals
+        # would mean something quite different and should be investigated.
+        for r in self.summary["records"]:
+            if r["amount_cents"] == 0:
+                self.assertEqual(r["letter_type"], "phase_down_determination",
+                                 f"{r['sdp_identifier']} reports $0 as an approval")
+
+    def test_document_categories_account_for_every_record(self):
+        total = (self.summary["approvals"] + self.summary["phase_down_determinations"]
+                 + self.summary["form_only_no_letter"])
+        self.assertEqual(total, self.summary["evaluated"])
 
 
 if __name__ == "__main__":

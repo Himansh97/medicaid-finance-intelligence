@@ -74,14 +74,20 @@ def run(limit: int | None = None) -> dict:
             **result.as_dict(),
         })
 
-    anchored = sum(1 for r in records if r["amount_cents"] is not None)
-    no_amount = sum(1 for r in records if r["issue"] == NO_AMOUNT_STATED)
+    approvals = [r for r in records if r["letter_type"] == "approval"]
+    phase_down = [r for r in records if r["letter_type"] == "phase_down_determination"]
+    form_only = [r for r in records if r["letter_type"] == "form_only_no_letter"]
+    anchored = sum(1 for r in approvals if r["amount_cents"] is not None)
+    no_amount = sum(1 for r in approvals if r["issue"] == NO_AMOUNT_STATED)
 
     return {
         "evaluated": len(records),
+        "approvals": len(approvals),
+        "phase_down_determinations": len(phase_down),
+        "form_only_no_letter": len(form_only),
         "anchored": anchored,
         "no_amount_stated_by_cms": no_amount,
-        "unresolved": len(records) - anchored - no_amount,
+        "unresolved": len(approvals) - anchored - no_amount,
         "phrases": dict(phrases),
         "issues": dict(issues),
         "records": records,
@@ -105,9 +111,14 @@ def main(argv=None) -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(summary, indent=1))
 
-    total = summary["evaluated"]
+    total = summary["approvals"] or 1
     pct = lambda n: f"{100 * n / total:5.1f}%"
-    print(f"evaluated {total} preprints\n")
+    print(f"evaluated {summary['evaluated']} documents:")
+    print(f"  {summary['approvals']:>5}  approval letters")
+    print(f"  {summary['phase_down_determinations']:>5}  phase-down determinations "
+          f"(Public Law 119-21)")
+    print(f"  {summary['form_only_no_letter']:>5}  preprint form only, no letter attached\n")
+    print("  of the approvals:")
     print(f"  amount anchored to a phrase   {summary['anchored']:>5}  {pct(summary['anchored'])}")
     print(f"  CMS stated no amount          {summary['no_amount_stated_by_cms']:>5}  "
           f"{pct(summary['no_amount_stated_by_cms'])}   (a fact about the source)")
@@ -123,7 +134,8 @@ def main(argv=None) -> int:
         for issue, n in sorted(summary["issues"].items(), key=lambda kv: -kv[1]):
             print(f"    {n:>5}  {issue}")
 
-    amounts = [r["amount_cents"] for r in summary["records"] if r["amount_cents"]]
+    amounts = [r["amount_cents"] for r in summary["records"]
+               if r["amount_cents"] and r["letter_type"] == "approval"]
     if amounts:
         print(f"\n  total of anchored amounts: ${sum(amounts) / 100:,.0f}")
         print(f"  largest single arrangement: ${max(amounts) / 100:,.0f}")
