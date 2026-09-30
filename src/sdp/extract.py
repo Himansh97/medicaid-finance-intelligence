@@ -25,6 +25,10 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.sdp.amounts import extract_amount
+# The form fields are the primary source: they cover the documents published
+# with no approval letter, and they carry the federal and non-federal split that
+# no letter states. The letter is the cross-check.
+from src.sdp.formfields import cross_check_identifier, read_form
 # The expected local path is derived from the identifier, not read from the
 # manifest. The manifest records local_path only when a download run finishes, so
 # reading it would make this blind to a fetch still in progress and to files
@@ -54,6 +58,8 @@ def run(limit: int | None = None) -> dict:
         if not path.exists() or path.stat().st_size == 0:
             continue
         result = extract_amount(path)
+        form = read_form(path)
+        id_mismatch = cross_check_identifier(entry["sdp_identifier"], form.cms_id)
         phrases[result.matched_phrase or "unanchored"] += 1
         if result.issue:
             issues[result.issue.split(",")[0][:60]] += 1
@@ -72,12 +78,22 @@ def run(limit: int | None = None) -> dict:
             "local_path": str(path.relative_to(ROOT)),
             "source_url": entry.get("pdf_url"),
             **result.as_dict(),
+            "form": form.as_dict(),
+            "identifier_mismatch": id_mismatch,
         })
 
     approvals = [r for r in records if r["letter_type"] == "approval"]
     phase_down = [r for r in records if r["letter_type"] == "phase_down_determination"]
     form_only = [r for r in records if r["letter_type"] == "form_only_no_letter"]
     anchored = sum(1 for r in approvals if r["amount_cents"] is not None)
+
+    def usable(r):
+        t = r["form"]["total"]
+        return (t["cents"] is not None and not t["ambiguous_unit"]
+                and not t["implausible"])
+
+    from_form = [r for r in records if usable(r)]
+    mismatches = sum(1 for r in records if r["identifier_mismatch"])
     no_amount = sum(1 for r in approvals if r["issue"] == NO_AMOUNT_STATED)
 
     return {
@@ -88,6 +104,14 @@ def run(limit: int | None = None) -> dict:
         "anchored": anchored,
         "no_amount_stated_by_cms": no_amount,
         "unresolved": len(approvals) - anchored - no_amount,
+        "totals_from_form_fields": len(from_form),
+        "identifier_mismatches": mismatches,
+        "sum_total_cents": sum(r["form"]["total"]["cents"] for r in from_form),
+        "sum_federal_cents": sum(
+            r["form"]["federal_share"]["cents"] for r in from_form
+            if r["form"]["federal_share"]["cents"] is not None
+            and not r["form"]["federal_share"]["ambiguous_unit"]
+            and not r["form"]["federal_share"]["implausible"]),
         "phrases": dict(phrases),
         "issues": dict(issues),
         "records": records,
@@ -139,6 +163,15 @@ def main(argv=None) -> int:
     if amounts:
         print(f"\n  total of anchored amounts: ${sum(amounts) / 100:,.0f}")
         print(f"  largest single arrangement: ${max(amounts) / 100:,.0f}")
+    ev = summary["evaluated"]
+    print(f"\n  FORM FIELDS (the primary source)")
+    print(f"    {summary['totals_from_form_fields']:>5}  "
+          f"{100 * summary['totals_from_form_fields'] / ev:5.1f}%  usable totals")
+    print(f"    ${summary['sum_total_cents'] / 100:>18,.0f}  sum of totals")
+    print(f"    ${summary['sum_federal_cents'] / 100:>18,.0f}  sum of federal share")
+    print("    (spans many rating periods; NOT an annual figure)")
+    print(f"\n    {summary['identifier_mismatches']:>5}  documents whose own CMS ID "
+          f"disagrees with their filename")
     print(f"\n  written to {OUT.relative_to(ROOT)}")
     return 0
 

@@ -102,6 +102,29 @@ On the first 390 preprints: 72.8% anchored, 25.6% no amount stated by CMS, **1.5
 
 That middle category is the interesting one. Some approvals read "incorporated in the capitation rates through a risk based rate adjustment" and stop, with no figure anywhere in the document. CMS approved those arrangements without a stated ceiling. This is the same phenomenon behind KFF's finding that 38 of 139 hospital preprints lacked complete rate data.
 
+## Phase 2f, the form fields (2026-09-30)
+
+`src/sdp/formfields.py`. The state's answers are in the preprint's fillable AcroForm fields, not in the text layer. Reading the page as text finds Question 4's label and never its answer, which is what made the approval letter look like the only source.
+
+The form is the better source on both counts that matter: it covers the 615 documents published with no letter attached, and it carries the federal and non-federal split that no letter states.
+
+**Three form templates are in circulation**: numbered (77%, the current one, with `4-Text`, `4.a-Text`, `0.2-CMS ID`), prose (13%, where field names are the question text), and minimal (10%, effectively empty). Only the numbered template is mapped; the other two are reported as unmapped rather than as empty answers, because a gap in this code and a gap in the source are different things.
+
+**Amounts are free text and the variety is wide**: `$310.4 million`, `$510.73 Million`, `$59.12M`, `$227.9 M`, `Approximately $3,093.1 million`, `$388,500,819  including the impact of...`, `$95,851,058 (including the imp...`. All parse. One federal share reads simply `396.97` beside a total of `$510.73 Million`; it almost certainly means millions, and almost certainly is not good enough, so the unit is flagged as assumed rather than resolved.
+
+**A plausibility ceiling was added.** Pennsylvania filed `$9,085,139 million`, combining a full-precision figure with a scale word. Read literally that is $9 trillion, about ten times total annual US Medicaid spending, and it alone dominated the first aggregate. Whether they meant $9,085,139 or $9.085 billion is not knowable from the field, so it is reported as implausible and left unresolved rather than quietly divided by a thousand to look sensible. The ceiling sits above the largest credible arrangement in the corpus, Texas at about $9.1 billion.
+
+**The identifier cross-check is live, and it finds a lot.** Of 213 documents carrying a CMS ID, **104 (48.8%) disagree with their own filename**. Some differ by provider class, `AZ_Fee_AMC.PC.SP_Renewal_...` filed against a document calling itself `AZ_Fee_AMC_Renewal_...`. Some differ by rating period year. Which is correct is not something this code can decide, so both are recorded.
+
+### Coverage
+
+| Source | Arrangements with an amount |
+|---|---|
+| Approval letters | 180 |
+| **Form fields** | **802** |
+
+Summed across all rating periods, the usable form totals come to **$314.1 billion, of which $180.1 billion is federal share**. That is not an annual figure and must not be compared directly to KFF's $137 billion annual estimate. The state ranking does corroborate: Texas, California, North Carolina, Virginia and Illinois lead in both.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
