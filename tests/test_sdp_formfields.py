@@ -140,5 +140,53 @@ class TestIdentifierCrossCheck(unittest.TestCase):
         self.assertIsNone(cross_check_identifier("MO_Fee_BHO_Renewal_20250701-20260630", ""))
 
 
+class TestPublishedDataset(unittest.TestCase):
+    """Runs only when the dataset has been published. Guards its shape."""
+
+    @classmethod
+    def setUpClass(cls):
+        import pandas as pd
+        path = ROOT / "data" / "published" / "sdp_arrangements.csv"
+        if not path.exists():
+            raise unittest.SkipTest("nothing published; see src.sdp.publish")
+        cls.df = pd.read_csv(path)
+
+    def test_every_listed_preprint_gets_a_row(self):
+        # Including the ones with no amount. A file containing only successful
+        # extractions would misstate its own coverage.
+        import json
+        manifest = json.loads((ROOT / "data" / "raw" / "sdp" / "manifest.json").read_text())
+        self.assertEqual(len(self.df), manifest["count"])
+
+    def test_the_identifier_is_unique(self):
+        self.assertEqual(self.df["sdp_identifier"].nunique(), len(self.df))
+
+    def test_every_publishable_amount_carries_its_provenance(self):
+        rows = self.df[self.df["amount_is_publishable"]]
+        self.assertTrue(rows["source_url"].notna().all())
+        self.assertTrue(rows["source_sha256"].notna().all())
+        self.assertTrue(rows["extraction_version"].notna().all())
+
+    def test_publishable_excludes_assumed_units_and_implausible_figures(self):
+        rows = self.df[self.df["amount_is_publishable"]]
+        self.assertFalse(rows["amount_unit_assumed"].any())
+        self.assertFalse(rows["amount_implausible"].any())
+
+    def test_the_two_independent_readings_mostly_agree(self):
+        both = self.df[self.df["total_amount_cents"].notna()
+                       & self.df["letter_amount_cents"].notna()
+                       & ~self.df["amount_implausible"]
+                       & ~self.df["amount_unit_assumed"]]
+        agree = (both["total_amount_cents"] == both["letter_amount_cents"]).mean()
+        self.assertGreater(
+            agree, 0.85,
+            f"form and letter agreement fell to {100 * agree:.1f}%; one reading has drifted")
+
+    def test_usd_is_consistent_with_cents(self):
+        rows = self.df[self.df["total_amount_cents"].notna()]
+        self.assertTrue(((rows["total_amount_cents"] / 100
+                          - rows["total_amount_usd"]).abs() < 0.005).all())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

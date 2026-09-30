@@ -32,6 +32,7 @@ This replaces the original "synthetic only" rule, which was written before the S
 ## Working rules
 
 - On the finance track, use fully synthetic records generated from scratch.
+- Generated data stays out of version control, with one deliberate exception. The published SDP dataset under `data/published/` **is** the deliverable, it is about a megabyte, and an open dataset nobody can download is not open. It is committed with a changelog and an extraction version. Raw PDFs, the fetch manifest and intermediate extraction output remain ignored.
 - On the SDP track, record every source: its URL, retrieval date, content hash, and what it cannot support. A figure nobody can trace back to a page is not publishable.
 - Projected spending is not actual spending. Say so beside every SDP figure.
 - Keep FFS medical spend, managed-care encounters, and state-to-plan capitation separate.

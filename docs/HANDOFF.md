@@ -125,6 +125,20 @@ The form is the better source on both counts that matter: it covers the 615 docu
 
 Summed across all rating periods, the usable form totals come to **$314.1 billion, of which $180.1 billion is federal share**. That is not an annual figure and must not be compared directly to KFF's $137 billion annual estimate. The state ranking does corroborate: Texas, California, North Carolina, Virginia and Illinois lead in both.
 
+## Phase 2g, publication (2026-09-30)
+
+`src/sdp/publish.py` writes `data/published/sdp_arrangements.csv` and `.parquet`, with [the schema](sdp_dataset.md) and a changelog. **1,157 rows across 43 states, 36 columns, 802 with a publishable amount.**
+
+Every preprint CMS lists gets a row, including the ones with no readable amount, because a file containing only the successful extractions would misstate its own coverage. Every row carries its source URL, the content hash of the PDF it was read from, when that PDF was retrieved, and which extraction version produced it.
+
+**The two independent readings agree on 90.7% of rows** where both exist, 194 of 214. That is form fields against approval-letter prose, two different parts of the document read by two different methods, so the agreement is a real check on both rather than a tautology.
+
+The 20 disagreements are systematic, not noise. Combined `FEE.VBP` arrangements disagree on 10 of 15 while pure `FEE` agrees on 169 of 174. The letter tends to state one component of a combined arrangement while the form states the combined total, Hawaii most clearly at ratios of four to thirteen. Neither reading is wrong; they answer slightly different questions, and the dataset documentation says so.
+
+**A sanity check worth recording.** Filtering to 2024 rating-period starts and excluding amendments gives 240 arrangements totalling $98.8 billion. KFF's independently derived $137 billion annual figure, scaled by this project's 69% amount coverage, predicts about $94 billion. Different method, same neighbourhood.
+
+One rule in AGENTS.md was in conflict and has been amended rather than quietly ignored: generated data stays out of version control, except the published dataset, which is the deliverable and is about a megabyte. Raw PDFs, the manifest and intermediate output remain ignored.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
