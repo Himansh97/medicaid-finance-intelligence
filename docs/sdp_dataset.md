@@ -113,3 +113,34 @@ python -m pytest tests -q
 ```
 
 The fetch honours `robots.txt` and the 1 second crawl delay it asks for.
+
+
+## Companion: reporting readiness
+
+`data/published/sdp_reporting_readiness.json`, built by `python -m src.sdp.readiness`.
+
+CMS requires states to report actual directed payment amounts in T-MSIS (`TOT-SDP-PAID-AMT`) from September 2026. Whether that produces usable data is the open question, and KFF put it this way: "It is unclear how comprehensive those data will be, most states currently do not report other types of supplemental payments in T-MSIS."
+
+This turns that sentence into numbers, from public data only.
+
+**It is a proxy and the file says so in three places.** There is no public measure of SDP reporting, because the requirement has only just taken effect. The nearest public evidence is CMS's own DQ Atlas assessment of **supplemental payment** reporting: a different payment category, but the same question, which is whether a state asked to report a payment amount in T-MSIS actually does.
+
+As of the newest published assessment, **2020**, across 53 states and territories:
+
+| DQ assessment | States |
+|---|---|
+| Unclassified | 35 |
+| Low concern | 10 |
+| Unusable | 5 |
+| Medium concern | 2 |
+| High concern | 1 |
+
+Ten of fifty-three were reporting usably. `Unclassified` generally means there was not enough data to assess, which for a reporting question is the answer rather than the absence of one.
+
+**Joined against the arrangements dataset, the pattern is worse than the headline.** Of the ten states moving the most directed payment money, **two** were reporting supplemental payments usably in 2020. Texas at $49.9 billion, North Carolina at $28.1 billion and Virginia at $23.7 billion are all `Unclassified`; New York is `Unusable` and Illinois is `High concern`.
+
+Three limits travel with every figure above:
+
+- Supplemental payments are fee-for-service; directed payments are managed care. A state good at one is not necessarily good at the other.
+- The newest assessment is 2020. **Nothing here describes 2026.**
+- Actual SDP amounts land in T-MSIS/TAF, which needs a ResDAC data use agreement and is out of scope. This project cannot close the gap it is describing.

@@ -1,0 +1,554 @@
+{
+ "available": true,
+ "proxy_for": "state directed payment reporting in T-MSIS",
+ "measured": "supplemental payment reporting quality",
+ "newest_year": 2020,
+ "source_file": "TAF_DQ_Supplemental_Pmts_2020_Preliminary_1.csv",
+ "source_url": "https://download.medicaid.gov/data/dq-atlas/20211018_v2_ETL_DEV_OT_SPLIT/measure_allStates_download.csv",
+ "states_assessed": 53,
+ "states_reporting_usably": 10,
+ "assessments": {
+  "Unclassified": 35,
+  "Low concern": 10,
+  "High concern": 1,
+  "Unusable": 5,
+  "Medium concern": 2
+ },
+ "states": [
+  {
+   "state": "Alabama",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Alaska",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Arizona",
+   "sdp_amount_usd": 11677563539.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Arkansas",
+   "sdp_amount_usd": 59644482.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "California",
+   "sdp_amount_usd": 31767597405.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "4,087,501",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Colorado",
+   "sdp_amount_usd": 458371223.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Connecticut",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Delaware",
+   "sdp_amount_usd": 290220180.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "District of Columbia",
+   "sdp_amount_usd": 485154441.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "1,131,667",
+   "pct_missing_or_zero_payment": "0.1",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Florida",
+   "sdp_amount_usd": 9262209516.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "25,891",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.7",
+   "reports_usably": true
+  },
+  {
+   "state": "Georgia",
+   "sdp_amount_usd": 5656750312.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Hawaii",
+   "sdp_amount_usd": 1169764753.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Idaho",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Illinois",
+   "sdp_amount_usd": 12251749640.0,
+   "data_year": "2020",
+   "dq_assessment": "High concern",
+   "supplemental_payment_records": "33,254",
+   "pct_missing_or_zero_payment": "39.3",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": false
+  },
+  {
+   "state": "Indiana",
+   "sdp_amount_usd": 2750700000.0,
+   "data_year": "2020",
+   "dq_assessment": "Unusable",
+   "supplemental_payment_records": "4,444,078",
+   "pct_missing_or_zero_payment": "67.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": false
+  },
+  {
+   "state": "Iowa",
+   "sdp_amount_usd": 6049272695.43,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Kansas",
+   "sdp_amount_usd": 2014276655.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Kentucky",
+   "sdp_amount_usd": 15005986410.0,
+   "data_year": "2020",
+   "dq_assessment": "Medium concern",
+   "supplemental_payment_records": "2,315,142",
+   "pct_missing_or_zero_payment": "10.6",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": false
+  },
+  {
+   "state": "Louisiana",
+   "sdp_amount_usd": 9096640271.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Maine",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Maryland",
+   "sdp_amount_usd": 135450000.0,
+   "data_year": "2020",
+   "dq_assessment": "Unusable",
+   "supplemental_payment_records": "12,869",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "97.0",
+   "reports_usably": false
+  },
+  {
+   "state": "Massachusetts",
+   "sdp_amount_usd": 3985310108.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Michigan",
+   "sdp_amount_usd": 2634923796.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "36,922",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Minnesota",
+   "sdp_amount_usd": 495518787.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Mississippi",
+   "sdp_amount_usd": 7971640329.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Missouri",
+   "sdp_amount_usd": 6001658535.54,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Montana",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Nebraska",
+   "sdp_amount_usd": 2164833974.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Nevada",
+   "sdp_amount_usd": 3685016885.9999995,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "New Hampshire",
+   "sdp_amount_usd": 411939917.67,
+   "data_year": "2020",
+   "dq_assessment": "Medium concern",
+   "supplemental_payment_records": "77,794",
+   "pct_missing_or_zero_payment": "11.5",
+   "pct_non_missing_payment_amount": "11.4",
+   "reports_usably": false
+  },
+  {
+   "state": "New Jersey",
+   "sdp_amount_usd": 6030499480.0,
+   "data_year": "2020",
+   "dq_assessment": "Unusable",
+   "supplemental_payment_records": "86,839",
+   "pct_missing_or_zero_payment": "64.2",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": false
+  },
+  {
+   "state": "New Mexico",
+   "sdp_amount_usd": 4859221000.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "New York",
+   "sdp_amount_usd": 13496757847.0,
+   "data_year": "2020",
+   "dq_assessment": "Unusable",
+   "supplemental_payment_records": "2,636,482",
+   "pct_missing_or_zero_payment": "86.6",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": false
+  },
+  {
+   "state": "North Carolina",
+   "sdp_amount_usd": 28104180631.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "North Dakota",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Ohio",
+   "sdp_amount_usd": 3362825900.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Oklahoma",
+   "sdp_amount_usd": 3353503656.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "2,268,344",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Oregon",
+   "sdp_amount_usd": 5798404660.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "94,398",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Pennsylvania",
+   "sdp_amount_usd": 14324353381.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "33",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Puerto Rico",
+   "sdp_amount_usd": 1137975198.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "8,379",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Rhode Island",
+   "sdp_amount_usd": 1364118968.0,
+   "data_year": "2020",
+   "dq_assessment": "Unusable",
+   "supplemental_payment_records": "7,781",
+   "pct_missing_or_zero_payment": "6.3",
+   "pct_non_missing_payment_amount": "86.7",
+   "reports_usably": false
+  },
+  {
+   "state": "South Carolina",
+   "sdp_amount_usd": 2455493781.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "South Dakota",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Tennessee",
+   "sdp_amount_usd": 10863261392.08,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Texas",
+   "sdp_amount_usd": 49904224104.700005,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Utah",
+   "sdp_amount_usd": 1036014858.99,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "1,872",
+   "pct_missing_or_zero_payment": "0.0",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "Vermont",
+   "sdp_amount_usd": 685969507.61,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Virgin Islands",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Virginia",
+   "sdp_amount_usd": 23731551296.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Washington",
+   "sdp_amount_usd": 6253033891.0,
+   "data_year": "2020",
+   "dq_assessment": "Low concern",
+   "supplemental_payment_records": "16,398,844",
+   "pct_missing_or_zero_payment": "1.5",
+   "pct_non_missing_payment_amount": "0.0",
+   "reports_usably": true
+  },
+  {
+   "state": "West Virginia",
+   "sdp_amount_usd": 2785954417.0,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Wisconsin",
+   "sdp_amount_usd": 2538432915.02,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  },
+  {
+   "state": "Wyoming",
+   "sdp_amount_usd": null,
+   "data_year": "2020",
+   "dq_assessment": "Unclassified",
+   "supplemental_payment_records": "0",
+   "pct_missing_or_zero_payment": "Missing TAF data",
+   "pct_non_missing_payment_amount": "Missing TAF data",
+   "reports_usably": false
+  }
+ ],
+ "caveats": [
+  "Supplemental payments are fee-for-service; directed payments are managed care. This is a proxy, not a measurement of SDP reporting.",
+  "The newest published assessment is 2020. Nothing here describes the September 2026 requirement taking effect.",
+  "Actual SDP amounts land in T-MSIS/TAF, which requires a ResDAC data use agreement and is out of scope for this project."
+ ]
+}

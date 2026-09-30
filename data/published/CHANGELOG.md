@@ -3,6 +3,13 @@
 All notable changes to the published dataset. Dates are the retrieval date of
 the underlying CMS documents, not the date the code changed.
 
+## 0.3.0 (2026-09-30)
+
+- `sdp_reporting_readiness.json` added: DQ Atlas supplemental payment reporting
+  quality by state, offered explicitly as a proxy for directed payment reporting
+  readiness, joined to the arrangements dataset.
+- No change to `sdp_arrangements`.
+
 ## 0.2.0 (2026-09-30)
 
 - `amount_cents` and `amount_source` added: the figure to use, taken from the
