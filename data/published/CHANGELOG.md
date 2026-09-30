@@ -3,6 +3,22 @@
 All notable changes to the published dataset. Dates are the retrieval date of
 the underlying CMS documents, not the date the code changed.
 
+## 0.2.0 (2026-09-30)
+
+- `amount_cents` and `amount_source` added: the figure to use, taken from the
+  form field and falling back to the approval letter. Coverage rises from 802 to
+  823 rows, because the previous release ignored the letter entirely when the
+  form had nothing usable.
+- `grandfathered_cap_cents` added. 211 phase-down determinations under Public
+  Law 119-21 carry a ceiling the arrangement may not exceed, totalling $146.4
+  billion. These are published in their own column and must never be summed
+  beside `amount_cents`.
+- `amount_unit_assumed` and `amount_implausible` now describe the amount that
+  was actually chosen. In 0.1.0 they described the form reading even on rows
+  published from the letter, which wrongly flagged 14 clear letter figures as
+  having an assumed unit. The form's own caveats moved to `form_unit_assumed`
+  and `form_implausible`.
+
 ## 0.1.0 (2026-09-30)
 
 First release. 1,157 rows across 43 states, built from approved state directed

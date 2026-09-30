@@ -1,7 +1,7 @@
 # The state directed payments dataset
 
 **Files:** `data/published/sdp_arrangements.csv` and `.parquet`
-**Extraction version:** 0.1.0
+**Extraction version:** 0.2.0
 **Source:** approved state directed payment preprints published by CMS, see [real data sources](real_data_sources.md)
 
 One row per approved preprint CMS lists, 1,157 rows across 43 states.
@@ -21,12 +21,14 @@ One row per approved preprint CMS lists, 1,157 rows across 43 states.
 | | Rows | |
 |---|---|---|
 | Total | 1,157 | every preprint CMS lists |
-| Publishable amount | 802 | 69.3% |
-| No usable amount | 355 | 30.7% |
+| Publishable amount | 823 | 71.1% |
+| No usable amount | 334 | 28.9% |
 
-The 355 break down as: documents published with no approval letter and an unmapped form template, amounts whose unit is assumed rather than stated, one implausible figure, and 7 rows whose PDF was not fetched because `robots.txt` disallows the path it is served from.
+The 334 break down as: documents published with no approval letter and an unmapped form template, amounts whose unit is assumed rather than stated, one implausible figure, and 7 rows whose PDF was not fetched because `robots.txt` disallows the path it is served from.
 
-Filter on `amount_is_publishable` to get the 802. The components behind that flag are all present as separate columns, so a reader who disagrees with the rule can apply their own.
+Filter on `amount_is_publishable` to get the 823.
+
+Coverage by form template is uneven, and not in the way the template names suggest. The `numbered` template yields 802 amounts from its form fields. The `prose` and `minimal` templates yield none from fields, because their fields are present but unfilled: those documents were flattened before publication. Where they carry an approval letter, the letter supplies the amount instead, which is why the two are not the coverage gap they first appear to be. The components behind that flag are all present as separate columns, so a reader who disagrees with the rule can apply their own.
 
 ## Columns
 
@@ -51,7 +53,10 @@ Money is in integer cents. `total_amount_usd` is provided for convenience and is
 
 | Column | Meaning |
 |---|---|
-| `total_amount_cents`, `total_amount_usd` | Estimated total, federal and non-federal combined. Question 4 of the preprint. |
+| `amount_cents`, `amount_usd` | **The figure to use.** Taken from the form field, falling back to the approval letter. |
+| `amount_source` | `form_field` or `approval_letter`, so a reader knows which reading produced the row. |
+| `grandfathered_cap_cents`, `grandfathered_cap_usd` | For phase-down determinations only: the ceiling a grandfathered arrangement may not exceed under Public Law 119-21. **Never sum this beside `amount_cents`.** 211 rows, $146.4 billion. |
+| `total_amount_cents`, `total_amount_usd` | Estimated total from the form field specifically. Question 4 of the preprint. |
 | `total_amount_raw` | Exactly what was typed, e.g. `$310.4 million including the impact of...`. |
 | `federal_share_cents`, `federal_share_raw` | Question 4a. |
 | `nonfederal_share_cents`, `nonfederal_share_raw` | Question 4b. |

@@ -182,6 +182,28 @@ class TestPublishedDataset(unittest.TestCase):
             agree, 0.85,
             f"form and letter agreement fell to {100 * agree:.1f}%; one reading has drifted")
 
+    def test_a_cap_is_only_ever_recorded_on_a_phase_down_document(self):
+        capped = self.df[self.df["grandfathered_cap_cents"].notna()]
+        self.assertGreater(len(capped), 0)
+        self.assertTrue((capped["document_type"] == "phase_down_determination").all())
+
+    def test_a_cap_never_becomes_the_published_amount(self):
+        # A phase-down document may still carry a legitimate Q4 total in its
+        # form, and that is a real projection. What must never happen is the
+        # letter's ceiling being read as an approved amount.
+        phase_down = self.df[self.df["document_type"] == "phase_down_determination"]
+        self.assertFalse((phase_down["amount_source"] == "approval_letter").any())
+
+    def test_every_publishable_row_names_its_source(self):
+        rows = self.df[self.df["amount_is_publishable"]]
+        self.assertTrue(rows["amount_source"].notna().all())
+        self.assertTrue(set(rows["amount_source"]) <= {"form_field", "approval_letter"})
+
+    def test_the_letter_fallback_only_fires_where_the_form_gave_nothing(self):
+        fallback = self.df[self.df["amount_source"] == "approval_letter"]
+        self.assertTrue(fallback["total_amount_cents"].isna().all()
+                        | ~fallback["amount_is_publishable"].isna().all())
+
     def test_usd_is_consistent_with_cents(self):
         rows = self.df[self.df["total_amount_cents"].notna()]
         self.assertTrue(((rows["total_amount_cents"] / 100
