@@ -80,6 +80,28 @@ The site returns 403 to a bare descriptive User-Agent but accepts `curl` and `py
 
 Where the source is wrong and cannot be resolved, nothing is guessed. **Eight identifiers remain unparsed, and all eight are errors in CMS's published data**: six carry a 9-digit date such as `202221001`, one a 7-digit date, and two have no rating period at all. Each keeps the fields that were readable and states why the rest are missing.
 
+## Phase 2e, amount extraction (2026-09-30)
+
+`src/sdp/amounts.py` reads the approved dollar amount; `src/sdp/extract.py` runs it over the corpus and reports the result.
+
+**The money is in CMS's approval letter, not the state-completed form.** Question 4 of the preprint asks for the total dollar amount and appears in every document, but the states' answers do not survive into the text layer. The letter, which is the first two or three pages, is the better source regardless: CMS writes it, so the wording is consistent in a way state-typed entries are not.
+
+**Six phrasings carry the amount**, discovered by inspecting the corpus rather than assumed: `separate payment term (of|amount) (up to)`, `payment term for this state directed payment is`, `risk[- ]based (rate) adjustment`, `total (dollar) amount of`, `amount of up to`, `not to exceed`. The connective words vary letter to letter with no apparent pattern.
+
+**Numbers appear in three formats.** Plain digits, and scaled as million or billion. Arizona writes every figure the scaled way, so a digits-only pattern loses that state entirely. Conversion is to integer cents by shifting the decimal rather than multiplying floats, so nine-figure amounts stay exact.
+
+**Selection is by position in the document, not by pattern order.** 82 of 309 letters checked match more than one phrase, because CMS states the amount in the approval bullet and restates it later. The approval bullet comes first, so the earliest match is the approving one. Choosing by the order patterns happen to be declared in this file would be an accident of authorship rather than a fact about the document. Where a second phrase gives a *different* figure, which does occur, both are reported rather than one quietly preferred.
+
+**Three outcomes are counted separately**, and collapsing them would let a drop in extraction quality hide behind CMS's own omissions:
+
+- an amount anchored to a recognised phrase
+- CMS stated no amount at all, which is a fact about the source
+- unresolved, which is our gap
+
+On the first 390 preprints: 72.8% anchored, 25.6% no amount stated by CMS, **1.5% unresolved**.
+
+That middle category is the interesting one. Some approvals read "incorporated in the capitation rates through a risk based rate adjustment" and stop, with no figure anywhere in the document. CMS approved those arrangements without a stated ceiling. This is the same phenomenon behind KFF's finding that 38 of 139 hospital preprints lacked complete rate data.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
