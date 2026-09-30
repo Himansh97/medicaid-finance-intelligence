@@ -3,6 +3,18 @@
 All notable changes to the published dataset. Dates are the retrieval date of
 the underlying CMS documents, not the date the code changed.
 
+## 0.5.0 (2026-09-30)
+
+- `sdp_tableau_extract.csv` added: 763 rows, one per arrangement per rating
+  period, built for BI tools where a measure gets summed without asking.
+  Superseded amendments are resolved, a rating period year is present for
+  filtering, and the reporting assessment is joined on.
+- Five rows are excluded from the extract, worth $1.11bn, because CMS published
+  their dates malformed and they cannot be assigned to a year. They remain in
+  `sdp_arrangements.csv`.
+- Eight rows filed as $0 by the state are kept and flagged `amount_is_zero`.
+- No change to `sdp_arrangements`.
+
 ## 0.4.0 (2026-09-30)
 
 - **Correction.** `identifier_mismatch` reported 104 rows in 0.3.0 and reports

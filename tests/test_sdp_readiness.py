@@ -114,3 +114,48 @@ class TestPublishedView(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestTableauExtract(unittest.TestCase):
+    """The extract exists to make the wrong total hard to produce."""
+
+    @classmethod
+    def setUpClass(cls):
+        import pandas as pd
+        path = ROOT / "data" / "published" / "sdp_tableau_extract.csv"
+        if not path.exists():
+            raise unittest.SkipTest("no extract; see src.sdp.tableau_export")
+        cls.df = pd.read_csv(path)
+
+    def test_one_row_per_arrangement_per_rating_period(self):
+        key = ["state_code", "payment_type", "provider_class",
+               "rating_period_start", "rating_period_end"]
+        self.assertFalse(self.df.duplicated(subset=key).any(),
+                         "a superseded filing survived and will double count")
+
+    def test_every_row_carries_an_amount(self):
+        # A BI tool sums what it is given, so a missing amount would read as a
+        # zero. Genuine zeros exist: eight states filed Question 4 as $0. Those
+        # are the published values and are kept, flagged rather than dropped.
+        self.assertTrue(self.df["amount_usd"].notna().all())
+        self.assertTrue((self.df["amount_usd"] >= 0).all())
+        zeros = self.df[self.df["amount_usd"] == 0]
+        self.assertTrue(zeros["amount_is_zero"].all(),
+                        "a zero amount must be flagged so it can be excluded")
+
+    def test_the_year_is_present_for_filtering(self):
+        self.assertTrue(self.df["rating_period_year"].notna().all())
+        years = self.df["rating_period_year"].astype(int).astype(str)
+        self.assertTrue(years.str.match(r"^\d{4}$").all())
+
+    def test_caps_and_spend_are_separate_columns(self):
+        self.assertIn("state_grandfathered_cap_usd", self.df.columns)
+        self.assertIn("amount_usd", self.df.columns)
+        self.assertNotEqual("state_grandfathered_cap_usd", "amount_usd")
+
+    def test_no_denominator_field_exists_to_tempt_a_per_capita_figure(self):
+        forbidden = [c for c in self.df.columns
+                     if any(w in c.lower() for w in ("member", "enroll", "capita", "pmpm"))]
+        self.assertEqual(forbidden, [],
+                         "this dataset has no denominators; a field implying one would invite "
+                         "a rate it cannot support")
