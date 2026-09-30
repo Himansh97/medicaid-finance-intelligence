@@ -1,6 +1,12 @@
 # Medicaid Finance Intelligence & Reporting Automation
 
-A synthetic-data portfolio project for a Medicaid finance team. **Current deliverable: Phase 1 documentation and repository structure only.** No data, database, pipeline, dashboard, anomaly detector, or AI implementation exists yet.
+Two tracks that share a repository and never share data.
+
+**The finance track** is a synthetic Medicaid finance warehouse: a fabricated dataset, a SQL schema, claim and eligibility resolution, quality gates and KPI views. Every record in it is invented. It exists to work through the definitions a finance team actually argues about, without touching anyone's health information.
+
+**The state directed payments track** is an open dataset built from real public CMS documents. CMS publishes 1,158 approved state directed payment preprints as individual PDFs with no bulk download, no CSV and no API, which makes roughly $137 billion a year of Medicaid spending technically public and practically unreadable. This track extracts them into something queryable and says plainly what the figures can and cannot support.
+
+Neither track uses protected health information, beneficiary records, or any file obtained under a data use agreement. See [the data boundary](AGENTS.md#the-data-boundary) and [real data sources](docs/real_data_sources.md).
 
 Start with [business requirements](docs/business_requirements.md), then the [KPI dictionary](docs/kpi_dictionary.md), [data dictionary](docs/data_dictionary.md), and [architecture](docs/architecture.md).
 

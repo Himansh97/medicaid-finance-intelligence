@@ -62,6 +62,24 @@ Every ratio is computed from summed components, none is stored, and none is an a
 
 **A known interaction, currently harmless.** A claim whose lines did not all map contributes to K06 (it is an accepted claim) but not to K04 (its dollars come from lines). K08 is therefore understated for that market-month. The release is blocked by `DQ_LINE_UNMAPPED_SERVICE_CODE` whenever this happens, so no published figure is affected, but the two measures disagree in the unpublished view and a future reader should not be surprised by it.
 
+## Phase 2d, the state directed payments track begins (2026-09-30)
+
+A second track, authorized separately. Real public CMS documents, isolated from the synthetic finance work.
+
+**Boundary.** `AGENTS.md` now carries an explicit two-track data boundary replacing the original synthetic-only rule. What protects people is unchanged and stated more sharply: no PHI, no beneficiary records, no T-MSIS or TAF, nothing under a data use agreement. What changed is that real public policy documents are in scope, in their own layer, and the two kinds of data never share a table, view, file or directory. `docs/real_data_sources.md` records each source and what it cannot support.
+
+**Acquisition.** `src/sdp/fetch_preprints.py` walks the CMS listing and downloads preprints. It stops when a page yields nothing new rather than trusting a page count, rate limits to the 1 second `robots.txt` asks for, hashes content, and never re-fetches an unchanged file.
+
+**Two decisions worth recording.**
+
+`robots.txt` disallows `/media/*`, and 7 of the 1,157 preprints (0.6%) are served from there. The fetcher honours that and does not retrieve them. Those arrangements keep their full listing metadata and lose only PDF-derived fields. A person browsing the site is not a crawler, so a file placed at its expected local path by hand is used and marked `fetch_provenance: manual`, which closes the gap without this code ignoring a published rule.
+
+The site returns 403 to a bare descriptive User-Agent but accepts `curl` and `python-requests` defaults, so the block is on the string's shape rather than on automation. The fetcher sends the conventional identified-crawler form, `Mozilla/5.0 (compatible; medicaid-finance-intelligence/0.1; +<repo>)`, which names the project and offers a contact point. A borrowed browser string would have worked and would have said nothing true.
+
+**Parsing.** `src/sdp/identifier.py` reads the CMS control name. The published convention is `STATE_PAYMENTTYPE_PROVIDERCLASS_REVIEWTYPE_START-END`, and about 95% of identifiers follow it. The parser repairs eight documented deviations and records each repair on the record that received it. **60 of 1,157 identifiers (5.2%) needed at least one repair**, most commonly hyphen separators (46) and a lower-case state code (22).
+
+Where the source is wrong and cannot be resolved, nothing is guessed. **Eight identifiers remain unparsed, and all eight are errors in CMS's published data**: six carry a 9-digit date such as `202221001`, one a 7-digit date, and two have no rating period at all. Each keeps the fields that were readable and states why the rest are missing.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
@@ -119,12 +137,21 @@ Added for the KPI layer:
 - K03 returns NULL for market B FFS, which has exposure in one month of two. Dividing by the months that happened to appear would report an average the period does not support.
 - Two mutation checks. Returning 0 instead of NULL for a zero denominator fails exactly the test covering it. Taking spend from claim headers rather than lines fails both category reconciliation tests, which is the intended tripwire for that error.
 
-Still unverified: no mart, variance calculation, release manifest or export has been executed. The anomaly thresholds remain untested against generated data.
+Added for the SDP track:
+
+- `python -m src.sdp.fetch_preprints manifest` walks 13 listing pages and records **1,157 preprints across 43 states and 168 provider classes**, of which **1,149 (99.3%) parse cleanly**.
+- `python -m pytest tests -q` passes **87 tests**, the 67 synthetic ones unchanged, confirming the real-data work did not disturb the finance track.
+- The identifier parser is tested against real published strings only. None is invented, and the malformed cases are malformed in CMS's data.
+- Four User-Agent strings were tested against the live site to establish that the 403 was about the string's shape and not about automation, before choosing one.
+- The `/media/*` share was measured (7 files, 0.6%) before deciding to honour the robots rule, rather than deciding first and measuring after.
+
+Still unverified: no PDF body has been extracted, so no dollar amount exists yet. No mart, variance calculation, release manifest or export has been executed. The anomaly thresholds remain untested against generated data.
 
 ## Next steps
 
 1. Clone the private repository using an authorized GitHub account, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
-2. Schema, fixture, resolution, quality rules and the KPI layer are done. The next unit is the spend variance bridge: K13 month over month, with the membership and PMPM effects that reconcile to the spend change, and market and category contributions at disjoint grains. The worked example in kpi_dictionary.md and the ordering note about the interaction term are the specification. Keep the statistical anomaly rule out of it until there is a longer generated history to tune the two thresholds against.
+2. On the SDP track, the next unit is PDF extraction: pull Q4's total dollar amount, Q1's rating period and Q12's measures table from the preprint bodies, anchored on the numbered questions rather than page positions, and cross-check each against the identifier. A disagreement between the two is a finding to report, not something to resolve silently. Build a golden set of 20 hand-checked preprints first and publish per-field accuracy against it.
+3. On the finance track, the next unit is the spend variance bridge: K13 month over month, with the membership and PMPM effects that reconcile to the spend change, and market and category contributions at disjoint grains. The worked example in kpi_dictionary.md and the ordering note about the interaction term are the specification. Keep the statistical anomaly rule out of it until there is a longer generated history to tune the two thresholds against.
 3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
 4. Keep Power BI, statistical anomaly routines, automation, and AI outside that task unless explicitly included.
 5. When the anomaly rule is eventually implemented, test it against deliberately quiet histories, meaningful shifts, and incomplete periods before any alert reaches a dashboard. Acceptance examples 8, 9 and 10 exist for exactly those three cases. Tuning the two thresholds is part of that work, not a prerequisite to it.
