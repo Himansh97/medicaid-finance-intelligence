@@ -32,7 +32,7 @@ OUT_DIR = ROOT / "data" / "published"
 
 # Bump when a change alters the values a row can take, so a consumer can tell
 # two releases apart without diffing them.
-EXTRACTION_VERSION = "0.2.0"
+EXTRACTION_VERSION = "0.4.0"
 
 
 def _amount(block: dict | None, field: str):
@@ -145,7 +145,16 @@ def build_rows() -> list[dict]:
             "form_implausible": bool(total.get("implausible")),
 
             "cms_id_in_document": form.get("cms_id"),
-            "identifier_mismatch": (rec or {}).get("identifier_mismatch"),
+            # Separated because they mean different things: one is a document
+            # contradicting itself, the other is a field nobody filled usefully.
+            "identifier_mismatch": (
+                (rec or {}).get("identifier_mismatch")
+                if str((rec or {}).get("identifier_mismatch") or "").startswith("document disagrees")
+                else None),
+            "cms_id_unusable": (
+                (rec or {}).get("identifier_mismatch")
+                if str((rec or {}).get("identifier_mismatch") or "").startswith("CMS ID field holds no")
+                else None),
             "identifier_repairs": "; ".join(entry.get("identifier_repairs") or []) or None,
             "identifier_issue": entry.get("identifier_issue"),
 
@@ -177,6 +186,7 @@ def publish() -> dict:
         "sum_total_usd": float(publishable["amount_usd"].sum()),
         "by_source": by_source,
         "identifier_mismatches": int(frame["identifier_mismatch"].notna().sum()),
+        "cms_id_unusable": int(frame["cms_id_unusable"].notna().sum()),
         "grandfathered_caps": int(frame["grandfathered_cap_cents"].notna().sum()),
         "sum_cap_usd": float(frame["grandfathered_cap_usd"].sum()),
         "robots_excluded": int(frame["excluded_reason"].notna().sum()),
@@ -203,7 +213,9 @@ def main(argv=None) -> int:
           f"(NOT an annual figure)")
     print(f"  {r['grandfathered_caps']} grandfathering caps under Public Law 119-21, "
           f"${r['sum_cap_usd']:,.0f}")
-    print(f"  {r['identifier_mismatches']} rows where the document disagrees with its filename")
+    print(f"  {r['identifier_mismatches']} rows where the document substantively "
+          f"disagrees with its filename")
+    print(f"  {r['cms_id_unusable']} rows where the CMS ID field holds no identifier")
     print(f"  {r['robots_excluded']} rows with no PDF, excluded by robots.txt")
     print(f"\n  {r['csv'].relative_to(ROOT)}")
     print(f"  {r['parquet'].relative_to(ROOT)}")

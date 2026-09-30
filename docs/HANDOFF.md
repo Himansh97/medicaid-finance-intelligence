@@ -139,6 +139,30 @@ The 20 disagreements are systematic, not noise. Combined `FEE.VBP` arrangements 
 
 One rule in AGENTS.md was in conflict and has been amended rather than quietly ignored: generated data stays out of version control, except the published dataset, which is the deliverable and is about a megabyte. Raw PDFs, the manifest and intermediate output remain ignored.
 
+## Audit of the identifier mismatch (2026-09-30)
+
+The 104 identifier mismatches reported in earlier releases were audited on request. **The figure was wrong and is now 56.** The fault was in this project's check, not in CMS's documents.
+
+Of 213 documents carrying a CMS ID field:
+
+| | Rows |
+|---|---|
+| Agree, once both sides are parsed | 126 |
+| CMS ID field holds no identifier at all | 31 |
+| Substantively disagree | 56 |
+
+Three defects in the original check, each inflating the count:
+
+1. **Raw string comparison.** `Nv-Fee-Amc-Renewal-20230101-20231231` was counted as disagreeing with `NV_Fee_AMC_Renewal_20230101-20231231`. Same arrangement, different separators and casing. Stray whitespace did the same.
+2. **Provider-class spellings treated as different classes.** CMS writes inpatient hospital as both `IPH` and `IP`, outpatient as both `OPH` and `OP`. A dozen Arizona conflicts were only spelling. The canonicalisation preserves the numeric suffix, because `OPH1` and `OPH2` are genuinely different classes.
+3. **Fields holding no identifier counted as conflicts.** Hawaii's CMS ID field reads `A`, `B` or `C`; one Florida document holds a date range in prose. Those are unusable fields, not contradictions, and now have their own column.
+
+A fourth defect was introduced by the fix and caught by an existing test: a field listing several identifiers, which happens when one submission supersedes another, was being compared only against the first. Agreement with any of them is agreement.
+
+What the surviving 56 disagree about: 21 on rating period alone, 17 on review type, 10 on provider class, 7 on state and payment type and class together, 2 on payment type. The rating-period and review-type cases look like a state reusing last year's form without updating the field. 50 of the 56 still carry a usable amount, so the disagreement concerns labelling rather than the money.
+
+**The lesson worth keeping:** a quality check that reports a finding needs auditing as carefully as the data it examines. This one manufactured roughly half its own headline, and the number was published twice before anyone looked at it closely.
+
 ## What does not exist
 
 No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.

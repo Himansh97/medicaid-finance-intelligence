@@ -109,6 +109,52 @@ class TestTemplateDetection(unittest.TestCase):
 class TestIdentifierCrossCheck(unittest.TestCase):
     """The filename and the document disagree more often than one would hope."""
 
+    def test_punctuation_and_casing_are_not_disagreements(self):
+        # The first version of this check compared raw strings and counted these
+        # as conflicts. They are the same arrangement written differently, and
+        # reporting them inflated the headline by roughly half.
+        for filename, document in [
+            ("Nv-Fee-Amc-Renewal-20230101-20231231",
+             "NV_Fee_AMC_Renewal_20230101-20231231"),
+            ("FL_Fee_IPH.OPH3_Renewal_20221001-20230930",
+             "FL_Fee_IPH.OPH3_ Renewal_20221001-20230930"),
+        ]:
+            self.assertIsNone(cross_check_identifier(filename, document),
+                              f"{filename} vs {document} is not a real disagreement")
+
+    def test_iph_and_ip_name_the_same_provider_class(self):
+        # CMS writes inpatient hospital both ways. Treating them as different
+        # arrangements manufactured a dozen conflicts that were only spelling.
+        self.assertIsNone(cross_check_identifier(
+            "AZ_Fee_IPH.OPH1_Renewal_20231001-20240930",
+            "AZ_Fee_IP.OP1_Renewal_20231001-20240930"))
+
+    def test_but_the_class_number_still_matters(self):
+        # OPH1 and OPH2 are genuinely different classes, so canonicalising the
+        # prefix must not swallow the digit.
+        self.assertIsNotNone(cross_check_identifier(
+            "AZ_Fee_IPH.OPH1_Renewal_20231001-20240930",
+            "AZ_Fee_IP.OP2_Renewal_20231001-20240930"))
+
+    def test_a_field_with_no_identifier_is_not_a_conflict(self):
+        # Hawaii's CMS ID field reads "A", "B" or "C".
+        issue = cross_check_identifier("HI_VBP.Fee_NF_Renewal_20240101-20241231", "C")
+        self.assertIsNotNone(issue)
+        self.assertIn("holds no identifier", issue)
+        self.assertNotIn("disagrees", issue)
+
+    def test_an_identifier_buried_in_prose_is_found(self):
+        self.assertIsNone(cross_check_identifier(
+            "NM_VBP_NF2_Renewal_20230101-20231231",
+            "Healthcare Quality Surcharge (NM_VBP_NF2_Renewal_20230101-20231231)"))
+
+    def test_a_real_disagreement_names_the_component(self):
+        issue = cross_check_identifier(
+            "VA_Fee_Oth_Renewal_20240701-20250630",
+            "VA_Fee_Oth_Renewal_20220701-20230630")
+        self.assertIn("rating_period_start", issue)
+        self.assertIn("rating_period_end", issue)
+
     def test_agreement_is_silent(self):
         self.assertIsNone(cross_check_identifier(
             "MO_Fee_BHO_Renewal_20250701-20260630",
@@ -120,7 +166,7 @@ class TestIdentifierCrossCheck(unittest.TestCase):
             "AZ_Fee_AMC.PC.SP_Renewal_20241001-20250930",
             "AZ_Fee_AMC_Renewal_20241001-20250930")
         self.assertIsNotNone(issue)
-        self.assertIn("AZ_Fee_AMC.PC.SP_Renewal", issue)
+        self.assertIn("provider_class", issue)
 
     def test_a_different_rating_period_is_reported(self):
         # Filed for 2022-2023, describes itself as 2021-2022. One is wrong, and
@@ -171,6 +217,13 @@ class TestPublishedDataset(unittest.TestCase):
         rows = self.df[self.df["amount_is_publishable"]]
         self.assertFalse(rows["amount_unit_assumed"].any())
         self.assertFalse(rows["amount_implausible"].any())
+
+    def test_unusable_id_fields_are_counted_apart_from_conflicts(self):
+        conflicts = self.df["identifier_mismatch"].notna()
+        unusable = self.df["cms_id_unusable"].notna()
+        self.assertFalse((conflicts & unusable).any(),
+                         "a row cannot be both a conflict and an unusable field")
+        self.assertGreater(unusable.sum(), 0)
 
     def test_the_two_independent_readings_mostly_agree(self):
         both = self.df[self.df["total_amount_cents"].notna()

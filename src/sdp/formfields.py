@@ -210,20 +210,97 @@ def read_form(pdf_path: Path) -> FormRecord:
     )
 
 
-def cross_check_identifier(filename_identifier: str, cms_id: str | None) -> str | None:
-    """Compare the identifier in the filename with the one inside the document.
+# An identifier embedded anywhere in the field, which may also hold prose.
+_ID_IN_TEXT = re.compile(r"[A-Za-z]{2}[_\-][A-Za-z.]+[_\-].*?\d{6,9}\s*-\s*\d{6,9}")
 
-    They disagree often enough to matter, and the disagreement is a finding for a
-    person to resolve rather than something to paper over. One Arizona document
-    is filed as AZ_Fee_AMC.PC.SP_Renewal_... while its own CMS ID field reads
-    AZ_Fee_AMC_Renewal_..., naming a different provider class.
+# CMS writes the same provider classes two ways: IPH and IP for inpatient
+# hospital, OPH and OP for outpatient hospital. Treating those as different
+# arrangements manufactures dozens of disagreements that are only spelling.
+#
+# The trailing digits matter and are kept: OPH1 and OPH2 are distinct classes,
+# so the pattern rewrites the prefix and preserves the number.
+_CLASS_SYNONYMS = ((r"\bIPH(\d*)", r"IP\1"), (r"\bOPH(\d*)", r"OP\1"))
+
+
+def _candidates(raw: str | None) -> list[tuple]:
+    """Every identifier the field names, reduced to comparable components.
+
+    A field may list more than one, separated by a slash, when one submission
+    supersedes another. Agreement with any of them is agreement: the document is
+    not contradicting its filename, it is naming its own history.
     """
-    if not cms_id:
+    found = []
+    for chunk in re.split(r"[/;]", str(raw or "")):
+        canon = _canonical(chunk)
+        if canon and canon not in found:
+            found.append(canon)
+    return found
+
+
+def _canonical(raw: str | None) -> tuple | None:
+    """Reduce an identifier to comparable components, or None if there is none.
+
+    Comparing raw strings is what the first version of this did, and it counted
+    Nv-Fee-Amc-Renewal-20230101-20231231 as disagreeing with
+    NV_Fee_AMC_Renewal_20230101-20231231. They are the same arrangement written
+    with different separators and casing.
+    """
+    from src.sdp.identifier import parse  # local import avoids a cycle
+
+    for chunk in re.split(r"[/;]", str(raw or "")):
+        hit = _ID_IN_TEXT.search(chunk)
+        if not hit:
+            continue
+        parsed = parse(hit.group(0))
+        if not parsed["state_code"]:
+            continue
+        provider_class = (parsed["provider_class"] or "").upper().replace("_", ".")
+        for pattern, replacement in _CLASS_SYNONYMS:
+            provider_class = re.sub(pattern, replacement, provider_class)
+        return (
+            parsed["state_code"],
+            parsed["payment_type_normalised"] or "",
+            provider_class,
+            parsed["review_type_normalised"] or "",
+            parsed["rating_period_start"],
+            parsed["rating_period_end"],
+        )
+    return None
+
+
+_COMPONENTS = ("state", "payment_type", "provider_class",
+               "review_type", "rating_period_start", "rating_period_end")
+
+
+def cross_check_identifier(filename_identifier: str, cms_id: str | None) -> str | None:
+    """Compare the filename's identifier with the one inside the document.
+
+    Both sides are parsed into components before comparing, so a difference
+    reported here is a difference of substance rather than of punctuation. Where
+    they do differ, the message names which components, because a disagreement
+    about the rating period means something quite different from one about
+    spelling of the provider class.
+
+    A field holding no identifier at all is not a disagreement. Hawaii's reads
+    "A", "B" or "C"; one Florida document holds a date range in prose. Those are
+    reported as unusable rather than counted as conflicts.
+    """
+    if not cms_id or not str(cms_id).strip():
         return None
-    # A field may list several ids separated by a slash when one submission
-    # supersedes another. Agreement with any of them is agreement.
-    candidates = [part.strip() for part in re.split(r"[/;]", cms_id) if part.strip()]
-    target = filename_identifier.strip()
-    if any(c == target for c in candidates):
+
+    documents = _candidates(cms_id)
+    if not documents:
+        return f"CMS ID field holds no identifier: {str(cms_id).strip()[:60]!r}"
+
+    filename = _canonical(filename_identifier)
+    if filename is None or filename in documents:
         return None
-    return f"filename says {target!r}; document says {cms_id.strip()[:80]!r}"
+
+    # Report against whichever listed identifier is closest, so the message
+    # names the smallest real difference rather than an arbitrary one.
+    document = min(documents,
+                   key=lambda d: sum(1 for a, b in zip(filename, d) if a != b))
+    differing = [name for name, a, b in zip(_COMPONENTS, filename, document) if a != b]
+    return (f"document disagrees on {', '.join(differing)}: "
+            f"filename {filename_identifier.strip()[:50]!r}, "
+            f"document {str(cms_id).strip()[:50]!r}")

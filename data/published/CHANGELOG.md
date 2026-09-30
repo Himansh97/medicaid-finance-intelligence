@@ -3,6 +3,19 @@
 All notable changes to the published dataset. Dates are the retrieval date of
 the underlying CMS documents, not the date the code changed.
 
+## 0.4.0 (2026-09-30)
+
+- **Correction.** `identifier_mismatch` reported 104 rows in 0.3.0 and reports
+  56 now. The earlier check compared raw strings, so separator and casing
+  differences, stray whitespace, and CMS's two spellings of inpatient and
+  outpatient hospital (`IPH`/`IP`, `OPH`/`OP`) were all counted as conflicts.
+  Both sides are now parsed into components before comparison, and the message
+  names which components differ.
+- `cms_id_unusable` added: 31 rows whose CMS ID field holds no identifier at
+  all, previously miscounted as conflicts.
+- A field listing several identifiers now counts as agreeing if any of them
+  matches, which is the case when one submission supersedes another.
+
 ## 0.3.0 (2026-09-30)
 
 - `sdp_reporting_readiness.json` added: DQ Atlas supplemental payment reporting

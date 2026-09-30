@@ -1,7 +1,7 @@
 # The state directed payments dataset
 
 **Files:** `data/published/sdp_arrangements.csv` and `.parquet`
-**Extraction version:** 0.2.0
+**Extraction version:** 0.4.0
 **Source:** approved state directed payment preprints published by CMS, see [real data sources](real_data_sources.md)
 
 One row per approved preprint CMS lists, 1,157 rows across 43 states.
@@ -75,7 +75,8 @@ Money is in integer cents. `total_amount_usd` is provided for convenience and is
 | `amount_unit_assumed` | The field had no currency symbol and no scale word. One federal share reads `396.97` beside a total of `$510.73 Million`; it probably means millions, which is not the same as knowing. |
 | `amount_implausible` | The figure exceeds any credible arrangement size, which in practice means the field combined a full number with a scale word. Pennsylvania filed `$9,085,139 million`. |
 | `amount_issue` | Why, in words. |
-| `identifier_mismatch` | The document's own CMS ID field disagrees with its filename. 104 rows. |
+| `identifier_mismatch` | The document's own CMS ID field **substantively** disagrees with its filename, naming which components differ. 56 rows. |
+| `cms_id_unusable` | The CMS ID field holds no identifier at all. Hawaii's reads `A`, `B` or `C`; one Florida document holds a date range in prose. 31 rows. Not a conflict. |
 | `cms_id_in_document` | What the document calls itself. |
 | `identifier_repairs` | Deviations from CMS's naming convention that were repaired, semicolon separated. |
 | `identifier_issue` | Why an identifier could not be fully parsed. Eight rows, all CMS typos. |
@@ -94,7 +95,21 @@ Money is in integer cents. `total_amount_usd` is provided for convenience and is
 
 ## Known limitations
 
-**The identifier mismatch is unresolved on purpose.** 104 documents describe themselves differently from their filename, sometimes by provider class and sometimes by rating period year. One of the two is wrong and this project cannot tell which, so both are published and neither is preferred.
+**The identifier mismatch is unresolved on purpose.** 56 documents describe themselves substantively differently from their filename. One of the two is wrong and this project cannot tell which, so both are published and neither is preferred.
+
+An earlier release reported 104. That figure was wrong, and the correction is worth stating because it cuts the headline in half. The first version of this check compared the two identifiers as raw strings, which counted `Nv-Fee-Amc-Renewal-20230101-20231231` as disagreeing with `NV_Fee_AMC_Renewal_20230101-20231231`, and counted `IPH.OPH1` as a different provider class from `IP.OP1` when CMS writes inpatient and outpatient hospital both ways. Both sides are now parsed into components before comparison, provider-class spellings are canonicalised while their numeric suffixes are preserved, and a field listing several identifiers counts as agreeing if any of them matches.
+
+What the 56 actually disagree about:
+
+| Component | Rows |
+|---|---|
+| Rating period only | 21 |
+| Review type (with or without period) | 17 |
+| Provider class | 10 |
+| State, payment type and class together | 7 |
+| Payment type only | 2 |
+
+The rating-period and review-type cases look like a state reusing last year's form without updating the field: a document filed as `VA_Fee_Oth_Renewal_20240701-20250630` calls itself `VA_Fee_Oth_Renewal_20220701-20230630`. The seven that differ on state as well are referencing a different arrangement entirely. 50 of the 56 still carry a usable amount, so the disagreement is about labelling rather than about the money.
 
 **Two form templates are unmapped.** The prose template (154 documents) has the answers present under field names that are the question text itself. They are recoverable with more work. The minimal template (111 documents) appears to hold nothing useful.
 
