@@ -79,6 +79,10 @@ python -m pytest tests -q                    # includes optional local-source ch
 
 The fetch honours `robots.txt`, including its one second crawl delay and its `Disallow: /media/*`, which costs 7 of 1,157 documents. Those keep their listing metadata and are reported as excluded rather than dropped.
 
+## Product development
+
+The finance platform is now being developed toward a complete local Docker release, followed by Azure. The [product specification](docs/product/PRODUCT_SPEC.md) defines the intended workflow and completion criteria; the [roadmap](docs/product/ROADMAP.md) orders the work. The first increment is a read-only release-preflight control. The web application, authenticated approvals, Docker stack, Power BI model and AI integrations are still planned.
+
 ## The other half of this repository
 
 A **synthetic Medicaid finance warehouse** shares the repo and shares no data with the above. A fabricated dataset, SQL schema, claim and eligibility resolution, quality gates and KPI views, built to work through the definitions a finance team argues about without touching anyone's health information. Start at [business requirements](docs/business_requirements.md), then the [KPI dictionary](docs/kpi_dictionary.md), [data dictionary](docs/data_dictionary.md) and [architecture](docs/architecture.md).

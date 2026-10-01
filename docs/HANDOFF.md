@@ -4,7 +4,27 @@ Last updated: 2026-09-30
 
 ## User objective and authorized scope
 
-Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. Phase 1 documentation, the subsequent synthetic pipeline and public SDP track, and the September 30 audit repairs are authorized. The latest request was to fix the six audited reporting/reproducibility defects. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. Phase 1 documentation, the subsequent synthetic pipeline and public SDP track, and the September 30 audit repairs are authorized. The latest request authorizes a detailed complete-product plan and starting implementation; the user selected local Docker first, then Azure. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+
+## Product foundation — current work
+
+Read [product specification](product/PRODUCT_SPEC.md) and [roadmap](product/ROADMAP.md). They extend the original phase-only delivery scope while preserving finance definitions and the two-track data boundary. M0 has started; no application or Docker stack is claimed complete.
+
+Implemented `src/releases/preflight.py`: read-only SQLite submission-readiness check requiring all eight run-wide rule versions plus one feed check for every expected claims partition. Missing, unexpected, stale, duplicate, failed or unevaluated evidence blocks eligibility. Warnings are not waivable until recorded warning decisions exist. The run must be READY_FOR_REVIEW. This is not authentication, approval, immutable snapshots, or certification; it trusts the existing input manifest and recorded results and cannot prove they were not modified upstream.
+
+Verification: 13 preflight tests; full suite 177 passed, 10 optional source checks skipped. A mutation bypassing blockers caused nine tests to fail; restoring the control returned the suite to green. A Docker executable exists locally, but its daemon status query did not complete and was interrupted; container startup remains unverified.
+
+Independent review found a false block for legitimate OUT_OF_COHORT claims: population rule v2 counted them as failing rows despite PASS. Added a failing regression, changed v3 counts/impact to NO_EXPOSURE or CONFLICTING_EXPOSURE only, and verified excluded claims remain outside KPI numerators. Preflight requires v3; existing databases must be rebuilt/rerun before this new gate accepts them. No other important findings in review.
+
+Next runnable milestone: M1 PostgreSQL parity and Docker/API/worker foundation. Before containers, inspect PostgreSQL compatibility of all schema/transformation SQL and prove the same fixture outcomes. Do not expose approval/upload endpoints before authorization exists. No paid/cloud resources are authorized by the local-first decision alone.
+
+Preflight command after building and running a fixture:
+
+```bash
+python -m src.releases.preflight --db data/processed/fixture.db --run-id RUN_FIXTURE_0001
+```
+
+Exit 0 means eligible for future submission, 1 means blocked, 2 means an input/database error. The existing intentionally defective fixture should return 1. The clean positive case lives in the tests and repairs source inputs before running the pipeline.
 
 ## Historical implementation notes
 

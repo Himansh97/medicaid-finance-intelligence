@@ -63,16 +63,17 @@ SELECT
 
 -- An accepted claim with no matching exposure in its service month, or matching
 -- exposure in a different market, plan or delivery system. These keep their dollars in the
--- bridge and stay out of KPI numerators, so this rule explains a gap between
+-- bridge and stay out of KPI numerators. OUT_OF_COHORT is a valid exclusion,
+-- not a failing row or quality impact. This rule explains a gap between
 -- raw spend and reported spend rather than hiding one.
 INSERT INTO dq_result
 SELECT
-    :run_id, 'DQ_CLAIM_POPULATION_MATCH', 'v2', 'ALL', 'ALL', 'BLOCKING',
+    :run_id, 'DQ_CLAIM_POPULATION_MATCH', 'v3', 'ALL', 'ALL', 'BLOCKING',
     (SELECT COUNT(*) FROM fact_claim_header_final WHERE run_id = :run_id),
     (SELECT COUNT(*) FROM fact_claim_header_final
-      WHERE run_id = :run_id AND population_match <> 'MATCHED'),
+      WHERE run_id = :run_id AND population_match IN ('NO_EXPOSURE', 'CONFLICTING_EXPOSURE')),
     (SELECT COALESCE(SUM(header_paid_amount_cents), 0) FROM fact_claim_header_final
-      WHERE run_id = :run_id AND population_match <> 'MATCHED'),
+      WHERE run_id = :run_id AND population_match IN ('NO_EXPOSURE', 'CONFLICTING_EXPOSURE')),
     CASE WHEN EXISTS (
         SELECT 1 FROM fact_claim_header_final
         WHERE run_id = :run_id AND population_match IN ('NO_EXPOSURE', 'CONFLICTING_EXPOSURE')
