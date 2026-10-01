@@ -140,7 +140,7 @@ This turns that sentence into numbers, from public data only.
 
 **It is a proxy and the file says so in three places.** There is no public measure of SDP reporting, because the requirement has only just taken effect. The nearest public evidence is CMS's own DQ Atlas assessment of **supplemental payment** reporting: a different payment category, but the same question, which is whether a state asked to report a payment amount in T-MSIS actually does.
 
-As of the newest published assessment, **2020**, across 53 states and territories:
+In the preserved assessment snapshot, **2020**, across 53 states and territories:
 
 | DQ assessment | States |
 |---|---|
@@ -152,10 +152,15 @@ As of the newest published assessment, **2020**, across 53 states and territorie
 
 Ten of fifty-three were reporting usably. `Unclassified` generally means there was not enough data to assess, which for a reporting question is the answer rather than the absence of one.
 
-**Joined against the arrangements dataset, the pattern is worse than the headline.** Of the ten states moving the most directed payment money, **two** were reporting supplemental payments usably in 2020. Texas at $49.9 billion, North Carolina at $28.1 billion and Virginia at $23.7 billion are all `Unclassified`; New York is `Unusable` and Illinois is `High concern`.
+**The SDP join is period-scoped.** `python -m src.sdp.readiness --rating-period-year 2024` uses the same identifier-based resolution as the BI extract and records the selected start year, known subtotal, known arrangement count and unknown arrangement count. In the corrected 2024 ranking, two of the ten largest known projected subtotals have Low concern assessments. These are incomplete projected subtotals, not total payments. Earlier cross-year figures (including Texas $49.9B) were invalid for this comparison and are withdrawn.
 
 Three limits travel with every figure above:
 
 - Supplemental payments are fee-for-service; directed payments are managed care. A state good at one is not necessarily good at the other.
-- The newest assessment is 2020. **Nothing here describes 2026.**
+- The assessment snapshot covers 2020. **Nothing here describes 2026.**
 - Actual SDP amounts land in T-MSIS/TAF, which needs a ResDAC data use agreement and is out of scope. This project cannot close the gap it is describing.
+
+
+## Derived reporting release 0.6.0
+
+The document archive and its extraction version remain unchanged. Derived files carry `resolution_version=0.6.0`. See [dashboard contract](sdp_dashboard.md) for missing-amount status, inferred lineage, start-year filtering, and separate state document-cap subtotals. `--reuse-assessments` recalculates the SDP join from the committed assessment snapshot without fetching new source data; it does not refresh the assessment date.

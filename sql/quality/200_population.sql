@@ -62,12 +62,12 @@ SELECT
     ) THEN 'FAIL' ELSE 'PASS' END;
 
 -- An accepted claim with no matching exposure in its service month, or matching
--- exposure in a different delivery system. These keep their dollars in the
+-- exposure in a different market, plan or delivery system. These keep their dollars in the
 -- bridge and stay out of KPI numerators, so this rule explains a gap between
 -- raw spend and reported spend rather than hiding one.
 INSERT INTO dq_result
 SELECT
-    :run_id, 'DQ_CLAIM_POPULATION_MATCH', 'v1', 'ALL', 'ALL', 'BLOCKING',
+    :run_id, 'DQ_CLAIM_POPULATION_MATCH', 'v2', 'ALL', 'ALL', 'BLOCKING',
     (SELECT COUNT(*) FROM fact_claim_header_final WHERE run_id = :run_id),
     (SELECT COUNT(*) FROM fact_claim_header_final
       WHERE run_id = :run_id AND population_match <> 'MATCHED'),

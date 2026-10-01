@@ -2,7 +2,7 @@
 
 Medicaid state directed payments move roughly **$137 billion a year**, about $93 billion of it federal. CMS publishes the approving documents for all of it.
 
-It publishes them as **1,158 individual PDFs**. No bulk download, no CSV, no API.
+It publishes them as **1,157 listed PDFs**. No bulk download, no CSV, no API.
 
 So the money is technically public and practically unreadable. This repository turns those documents into a dataset, and reports what they do and do not contain.
 
@@ -24,13 +24,13 @@ The shape of the source explains the gap. Only 298 of the documents are approval
 
 **Of the 298 approval letters, 118 state no figure at all.** They read "incorporated in the capitation rates through a risk based rate adjustment" and stop. Most of those arrangements are recoverable because the amount sits in the form field instead, which is why reading both sources matters; 13 are not recoverable from either.
 
-For the 2024 rating period, the most complete year, the dataset holds **246 arrangements totalling $98.8 billion**.
+For rating periods **starting in 2024**, the candidate extract contains **285 arrangement groups**, of which **known projected amounts sum to $92.71 billion**. This is an incomplete subtotal, not actual spending or a calendar-year total. Version selection is inferred from identifiers; unresolved and missing amounts remain visible.
 
 Two things fall out of the extraction that are worth more than the totals.
 
-**$146.4 billion sits under grandfathering caps.** 211 documents are preliminary determinations under Public Law 119-21, stating the ceiling an existing arrangement may not exceed before the section 71116 phase down begins. CMS projects the new limits will cut $510 billion in federal spending between 2026 and 2035. These caps are published here in their own column and are never summed beside approved amounts.
+**Grandfathering caps are a separate document measure.** The archive retains each document's stated ceiling. The [state cap file](data/published/sdp_state_caps.csv) aggregates those document values once per state, with contributing identifiers. Overlap between documents has not been resolved, so its subtotal must not be described as unique statutory exposure or added to projected payments.
 
-**The states with the most money have the weakest reporting record.** From September 2026, CMS requires states to report actual directed payment amounts in T-MSIS. Of the ten states moving the most directed payment money, **two** were reporting supplemental payments usably at the last public assessment. Texas at $49.9 billion is `Unclassified`. New York is `Unusable`. Illinois is `High concern`.
+**Reporting readiness is a historical proxy.** Among the ten states with the largest **known projected subtotals for rating periods starting in 2024**, two had a `Low concern` supplemental-payment assessment in the preserved 2020 snapshot. California has the largest known subtotal ($12.76B); Texas is $8.42B. Missing amounts and inferred lineage mean these are not definitive rankings of total state payments.
 
 That last point is a proxy and the repository says so everywhere it appears: it measures *supplemental* payment reporting, in *2020*. No public measure of directed payment reporting exists, because the requirement has only just taken effect.
 
@@ -40,7 +40,7 @@ Leading with the limits, because a dataset that hides them is worse than no data
 
 - **These are projections, not spending.** A preprint records what a state expected at approval. MACPAC records that preprints are never resubmitted to reconcile against what was actually paid.
 - **Actual amounts are out of reach.** They land in T-MSIS/TAF, which needs a ResDAC data use agreement. This project describes that gap and cannot close it.
-- **Do not sum the file.** Rows span 2020 to 2027 and include amendments that restate full-year totals. Filter to one rating period year first. [The BI extract](data/published/sdp_tableau_extract.csv) does that resolution for you.
+- **Do not sum the file.** Rows span 2020 to 2027 and include amendments that restate full-year totals. Filter to one rating period year first. [The BI extract](data/published/sdp_tableau_extract.csv) exposes identifier-based version selection and unresolved amounts. It does not verify legal supersession.
 - **Not a complete census.** Arrangements paying exact fee-for-service rates need no preprint, so they never appear in the source.
 - **Coverage is 71%.** The missing 29% is mostly CMS not stating an amount, not extraction failing.
 
@@ -56,14 +56,25 @@ Amounts are written `$310.4 million`, `$59.12M`, `$227.9 M`, `Approximately $3,0
 
 ## Reproducing it
 
+Use Python 3.13. The offline suite needs no CMS downloads:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pytest -m 'not integration' -q
+```
+
+Optional source integration tests require the downloaded manifest/PDFs. Run `python -m pytest -m integration -q` after acquisition; unavailable local inputs are skipped. GitHub Actions runs the offline suite.
+
 ```bash
 python -m src.sdp.fetch_preprints manifest   # 13 requests to the CMS listing
 python -m src.sdp.fetch_preprints download   # ~1,150 PDFs, resumable, rate limited
 python -m src.sdp.extract                    # read the amounts
 python -m src.sdp.publish                    # CSV and Parquet
-python -m src.sdp.readiness                  # the reporting view
+python -m src.sdp.readiness --rating-period-year 2024  # period-scoped reporting view
 python -m src.sdp.tableau_export             # BI extract
-python -m pytest tests -q                    # 160 tests
+python -m pytest tests -q                    # includes optional local-source checks
 ```
 
 The fetch honours `robots.txt`, including its one second crawl delay and its `Disallow: /media/*`, which costs 7 of 1,157 documents. Those keep their listing metadata and are reported as excluded rather than dropped.
@@ -77,12 +88,14 @@ Neither track uses protected health information, beneficiary records, or any fil
 ## Layout
 
 ```text
-src/sdp/          fetch, parse, extract, publish, readiness, BI export
+AGENTS.md         instructions and two-track data boundary
+docs/HANDOFF.md   current status, verification, limits and next steps
+src/sdp/          fetch, parse, extract, publish, version selection, readiness, BI export
 src/              generator, resolution, quality, KPI layer (synthetic track)
 sql/              schema, transformations, quality rules, KPI views
 data/published/   the dataset, the extract, the readiness view, changelog
 docs/             dataset schema, dashboard spec, data sources, handoff
-tests/            160 tests
+tests/            offline regressions and optional source integration checks
 ```
 
 Raw PDFs and intermediate output are not committed. The published dataset is, because an open dataset nobody can download is not open.

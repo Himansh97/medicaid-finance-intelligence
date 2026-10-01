@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import unittest
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -149,6 +150,7 @@ class TestNormalisation(unittest.TestCase):
                             "raw values stay different, because the inconsistency is a finding")
 
 
+@pytest.mark.integration
 class TestAgainstTheRealManifest(unittest.TestCase):
     """Runs only when a manifest has been fetched. Guards the headline numbers."""
 

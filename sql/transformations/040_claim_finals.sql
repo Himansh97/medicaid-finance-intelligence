@@ -51,6 +51,8 @@ SELECT
     -- so the money is explained rather than silently dropped.
     CASE
         WHEN mm.member_key IS NULL THEN 'NO_EXPOSURE'
+        WHEN mm.market_key <> r.market_key OR mm.plan_key <> r.plan_key
+            THEN 'CONFLICTING_EXPOSURE'
         WHEN mm.in_primary_cohort = 0 THEN 'OUT_OF_COHORT'
         WHEN mm.delivery_system <> CASE r.record_type
                                        WHEN 'FFS' THEN 'FFS'
