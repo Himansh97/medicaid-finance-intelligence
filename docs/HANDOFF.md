@@ -173,7 +173,7 @@ This section described Phase 1 and had gone badly out of date, claiming there wa
 
 **Both tracks:** no MongoDB. It was planned, and the evidence since argues against it: the published dataset is a flat table and PostgreSQL alone would serve. The install is in any case blocked on outdated Command Line Tools on the development machine.
 
-**The repository is private.** This matters more than anything else on this list. The SDP track exists because CMS publishes $137 billion a year as 1,158 individual PDFs with no structured dataset. That dataset now exists and is still not public, so the gap the project was built to close remains open. The repository description also still reads "Synthetic Medicaid finance portfolio: Phase 1 requirements, KPI definitions, data model, and architecture", which describes neither track as they now stand.
+**The repository is public as of 2026-09-30**, with a description that matches what it now contains. The dataset is reachable, which was the point: CMS publishes $137 billion a year as 1,158 individual PDFs and no structured dataset existed. One now does.
 
 ## Design choices to preserve or explicitly revise
 
@@ -240,7 +240,7 @@ Still unverified: no PDF body has been extracted, so no dollar amount exists yet
 
 ## Next steps
 
-1. Clone the private repository using an authorized GitHub account, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
+1. Clone the repository, which is public, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
 2. On the SDP track, the next unit is PDF extraction: pull Q4's total dollar amount, Q1's rating period and Q12's measures table from the preprint bodies, anchored on the numbered questions rather than page positions, and cross-check each against the identifier. A disagreement between the two is a finding to report, not something to resolve silently. Build a golden set of 20 hand-checked preprints first and publish per-field accuracy against it.
 3. On the finance track, the next unit is the spend variance bridge: K13 month over month, with the membership and PMPM effects that reconcile to the spend change, and market and category contributions at disjoint grains. The worked example in kpi_dictionary.md and the ordering note about the interaction term are the specification. Keep the statistical anomaly rule out of it until there is a longer generated history to tune the two thresholds against.
 3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
