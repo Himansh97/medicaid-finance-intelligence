@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import sys
 import unittest
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -156,6 +157,7 @@ class TestSourceSilence(unittest.TestCase):
             "the letter contains no dollar figure at all, which is the point")
 
 
+@pytest.mark.integration
 class TestAgainstDownloadedPreprints(unittest.TestCase):
     """Runs only when PDFs have been fetched. Guards the headline rates."""
 

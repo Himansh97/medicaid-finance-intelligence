@@ -1,3 +1,15 @@
+# Derived reporting release 0.6.0 — 2026-09-30
+
+Repairs audit findings; document archive extraction remains at 0.4.0 and is unchanged.
+
+- Numeric amendment ordering; selection before missing-amount filtering; suffix-aware groups; ambiguous versions withheld.
+- BI extract now retains unknown amounts and lineage/provenance columns (breaking schema change).
+- Repeated state caps removed; separate state document-cap subtotals with overlap caveats.
+- Readiness rankings restricted to rating periods starting in 2024; original 2020 assessments reused.
+- 1,061 candidate groups, 329 missing/unresolved amounts. Known 2024 projected subtotal $92.71B replaces $98.8B; neither is actual spending.
+
+Earlier entries below describe historical releases and may contain superseded counts or claims.
+
 # Changelog
 
 All notable changes to the published dataset. Dates are the retrieval date of

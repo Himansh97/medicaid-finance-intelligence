@@ -129,29 +129,27 @@ class TestTableauExtract(unittest.TestCase):
 
     def test_one_row_per_arrangement_per_rating_period(self):
         key = ["state_code", "payment_type", "provider_class",
-               "rating_period_start", "rating_period_end"]
+               "rating_period_start", "rating_period_end", "identifier_suffix"]
         self.assertFalse(self.df.duplicated(subset=key).any(),
                          "a superseded filing survived and will double count")
 
-    def test_every_row_carries_an_amount(self):
-        # A BI tool sums what it is given, so a missing amount would read as a
-        # zero. Genuine zeros exist: eight states filed Question 4 as $0. Those
-        # are the published values and are kept, flagged rather than dropped.
-        self.assertTrue(self.df["amount_usd"].notna().all())
-        self.assertTrue((self.df["amount_usd"] >= 0).all())
-        zeros = self.df[self.df["amount_usd"] == 0]
-        self.assertTrue(zeros["amount_is_zero"].all(),
-                        "a zero amount must be flagged so it can be excluded")
+    def test_unknown_amounts_are_explicit_not_zero(self):
+        known = self.df.amount_status.eq('KNOWN')
+        self.assertTrue(self.df.loc[known, 'amount_usd'].notna().all())
+        self.assertTrue(self.df.loc[~known, 'amount_usd'].isna().all())
+        self.assertTrue(self.df.loc[self.df.amount_usd.eq(0), 'amount_is_zero'].all())
 
     def test_the_year_is_present_for_filtering(self):
         self.assertTrue(self.df["rating_period_year"].notna().all())
         years = self.df["rating_period_year"].astype(int).astype(str)
         self.assertTrue(years.str.match(r"^\d{4}$").all())
 
-    def test_caps_and_spend_are_separate_columns(self):
-        self.assertIn("state_grandfathered_cap_usd", self.df.columns)
-        self.assertIn("amount_usd", self.df.columns)
-        self.assertNotEqual("state_grandfathered_cap_usd", "amount_usd")
+    def test_caps_are_at_state_grain_in_separate_file(self):
+        import pandas as pd
+        self.assertNotIn('state_grandfathered_cap_usd', self.df.columns)
+        caps = pd.read_csv(ROOT / 'data/published/sdp_state_caps.csv')
+        self.assertFalse(caps.state_code.duplicated().any())
+        self.assertTrue(caps.cap_document_count.gt(0).all())
 
     def test_no_denominator_field_exists_to_tempt_a_per_capita_figure(self):
         forbidden = [c for c in self.df.columns

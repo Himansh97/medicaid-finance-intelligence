@@ -1,10 +1,14 @@
 # Project handoff
 
-Last updated: 2026-09-29
+Last updated: 2026-09-30
 
 ## User objective and authorized scope
 
-Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. The latest implementation authorization was limited to Phase 1: create the directory structure and write business requirements, KPI dictionary, data dictionary, and architecture. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. Phase 1 documentation, the subsequent synthetic pipeline and public SDP track, and the September 30 audit repairs are authorized. The latest request was to fix the six audited reporting/reproducibility defects. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+
+## Historical implementation notes
+
+The following sections record earlier phases and their checks at that time. The current audit repair and next-steps sections below supersede earlier counts and limitations.
 
 ## Completed
 
@@ -135,7 +139,7 @@ Every preprint CMS lists gets a row, including the ones with no readable amount,
 
 The 20 disagreements are systematic, not noise. Combined `FEE.VBP` arrangements disagree on 10 of 15 while pure `FEE` agrees on 169 of 174. The letter tends to state one component of a combined arrangement while the form states the combined total, Hawaii most clearly at ratios of four to thirteen. Neither reading is wrong; they answer slightly different questions, and the dataset documentation says so.
 
-**A sanity check worth recording.** Filtering to 2024 rating-period starts and excluding amendments gives 240 arrangements totalling $98.8 billion. KFF's independently derived $137 billion annual figure, scaled by this project's 69% amount coverage, predicts about $94 billion. Different method, same neighbourhood.
+**Historical total withdrawn.** The earlier $98.8B comparison mixed selection assumptions and must not validate the current dataset. Release 0.6.0 reports the known projected subtotal and its explicit coverage instead.
 
 One rule in AGENTS.md was in conflict and has been amended rather than quietly ignored: generated data stays out of version control, except the published dataset, which is the deliverable and is about a megabyte. Raw PDFs, the manifest and intermediate output remain ignored.
 
@@ -236,17 +240,27 @@ Added for the SDP track:
 - Four User-Agent strings were tested against the live site to establish that the 403 was about the string's shape and not about automation, before choosing one.
 - The `/media/*` share was measured (7 files, 0.6%) before deciding to honour the robots rule, rather than deciding first and measuring after.
 
-Still unverified: no PDF body has been extracted, so no dollar amount exists yet. No mart, variance calculation, release manifest or export has been executed. The anomaly thresholds remain untested against generated data.
+Still unverified: not every public amount or inferred version relationship has been manually checked against its source PDF. Source acquisition/extraction was not rerun for the audit repairs. Finance certification, variance/anomaly execution, dashboards and AI remain unimplemented; anomaly thresholds remain untested against generated histories.
+
+## Current audit repair (2026-09-30)
+
+- Shared `src/sdp/resolution.py` resolves numeric amendments before checking amount availability. Latest missing amounts remain null. Version ties/unknown review types are ambiguous. Suffixes remain in family keys. These are explicit filename inferences, not verified legal lineage.
+- BI export retains missing amounts, lineage status, candidate identifiers and source provenance. Optional/missing readiness produces null assessments instead of a crash.
+- Caps moved to `sdp_state_caps.csv`, one row per state. The measure is an archive document-cap subtotal with unresolved overlap, not unique exposure.
+- Readiness requires an explicit CLI start year and shares resolution with BI. Existing 2020 assessments were reused, not refetched. Known/unknown counts travel with projected subtotals.
+- Claim finalization now rejects market/plan mismatches as CONFLICTING_EXPOSURE. DQ_CLAIM_POPULATION_MATCH v2 blocks them; existing KPI filters exclude their dollars.
+- Pinned direct Python dependencies, offline regression tests and a GitHub Actions workflow added. Raw manifest/PDF tests are optional integration checks. A small hand-authored publication test proves missing extraction rows remain in output without requiring downloaded files.
+- Derived release 0.6.0: 1,061 groups, 329 missing/unresolved amounts; 2024 known projected subtotal $92.71B. Prior $98.8B and cross-year state ranking claims withdrawn. Original archive remains unchanged.
+
+Verification: `python -m pytest -q` → 164 passed, 10 skipped (optional local CMS inputs); offline CI command `python -m pytest -m "not integration" -q` → 164 passed, 10 deselected. The synthetic fixture still intentionally fails on its three planted defects; this is expected control behavior, not a test failure.
 
 ## Next steps
 
-1. Clone the repository, which is public, or use this checkout. Read AGENTS.md and this handoff, then inspect branch status and the latest commit.
-2. On the SDP track, the next unit is PDF extraction: pull Q4's total dollar amount, Q1's rating period and Q12's measures table from the preprint bodies, anchored on the numbered questions rather than page positions, and cross-check each against the identifier. A disagreement between the two is a finding to report, not something to resolve silently. Build a golden set of 20 hand-checked preprints first and publish per-field accuracy against it.
-3. On the finance track, the next unit is the spend variance bridge: K13 month over month, with the membership and PMPM effects that reconcile to the spend change, and market and category contributions at disjoint grains. The worked example in kpi_dictionary.md and the ordering note about the interaction term are the specification. Keep the statistical anomaly rule out of it until there is a longer generated history to tune the two thresholds against.
-3. Turn the acceptance examples into meaningful tests, including replacements, voids, members without claims, zero denominators, overlapping eligibility, and missing market feeds.
-4. Keep Power BI, statistical anomaly routines, automation, and AI outside that task unless explicitly included.
-5. When the anomaly rule is eventually implemented, test it against deliberately quiet histories, meaningful shifts, and incomplete periods before any alert reaches a dashboard. Acceptance examples 8, 9 and 10 exist for exactly those three cases. Tuning the two thresholds is part of that work, not a prerequisite to it.
+1. Review and merge the audit repair branch after CI. No dashboard, AI layer or deployment was added.
+2. Manually verify arrangement family links and amendment order against source documents, especially ambiguous/renamed families. Filename order alone cannot certify legal supersession.
+3. Resolve overlap between cap documents before publishing a unique exposure total. Preserve the distinction between projections, document ceilings and actuals.
+4. Finance release certification and manifests are still required before the synthetic KPI views become certified outputs. Then separately scope dashboard work, variance/anomaly logic and AI.
 
-## Outstanding context
+RTK.md remains absent from the checked workspace; no content has been assumed.
 
-The user's workspace instructions referenced RTK.md, but it was absent from the project and checked parent directories. No content from that missing file has been assumed. CMS source links are recorded in data_dictionary.md; the schema is a conceptual portfolio adaptation, not an official TAF file specification.
+Final audit verification: clean tracked-file snapshot also passed 164 tests with 10 optional integration skips; dependency check found no conflicts. Independent review found no critical/important defects and separately passed all 14 audit regressions.

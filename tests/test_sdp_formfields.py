@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import unittest
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -197,11 +198,15 @@ class TestPublishedDataset(unittest.TestCase):
             raise unittest.SkipTest("nothing published; see src.sdp.publish")
         cls.df = pd.read_csv(path)
 
+    @pytest.mark.integration
     def test_every_listed_preprint_gets_a_row(self):
         # Including the ones with no amount. A file containing only successful
         # extractions would misstate its own coverage.
         import json
-        manifest = json.loads((ROOT / "data" / "raw" / "sdp" / "manifest.json").read_text())
+        path = ROOT / "data" / "raw" / "sdp" / "manifest.json"
+        if not path.exists():
+            self.skipTest("optional integration check requires the downloaded CMS manifest")
+        manifest = json.loads(path.read_text())
         self.assertEqual(len(self.df), manifest["count"])
 
     def test_the_identifier_is_unique(self):
