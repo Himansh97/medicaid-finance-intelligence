@@ -165,7 +165,15 @@ What the surviving 56 disagree about: 21 on rating period alone, 17 on review ty
 
 ## What does not exist
 
-No synthetic data, executable generator, SQL schema, pipeline, automated tests, Power BI file, anomaly implementation, AI integration, cloud infrastructure, or deployment. The project is initialized on branch `main` with a private GitHub repository at https://github.com/Himansh97/medicaid-finance-intelligence and remote `origin`. The user authorized repository creation and pushing this foundation. Verify synchronization using `git status` and the remote branch before continuing.
+This section described Phase 1 and had gone badly out of date, claiming there was no SQL schema, pipeline or test suite long after all three existed. Corrected 2026-09-30.
+
+**Finance track, does not exist:** the spend variance bridge (K13), the statistical anomaly rule, marts, the release manifest and approval flow, any Power BI or Tableau file, AI integration, cloud infrastructure, deployment.
+
+**SDP track, does not exist:** actual paid amounts, which sit in T-MSIS/TAF behind a ResDAC data use agreement and are out of scope by design. No dashboard has been built; `docs/sdp_dashboard.md` specifies one. The prose and minimal form templates remain unmapped, though they are not the coverage gap they appear to be.
+
+**Both tracks:** no MongoDB. It was planned, and the evidence since argues against it: the published dataset is a flat table and PostgreSQL alone would serve. The install is in any case blocked on outdated Command Line Tools on the development machine.
+
+**The repository is private.** This matters more than anything else on this list. The SDP track exists because CMS publishes $137 billion a year as 1,158 individual PDFs with no structured dataset. That dataset now exists and is still not public, so the gap the project was built to close remains open. The repository description also still reads "Synthetic Medicaid finance portfolio: Phase 1 requirements, KPI definitions, data model, and architecture", which describes neither track as they now stand.
 
 ## Design choices to preserve or explicitly revise
 
