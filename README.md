@@ -81,7 +81,9 @@ The fetch honours `robots.txt`, including its one second crawl delay and its `Di
 
 ## Product development
 
-The finance platform is now being developed toward a complete local Docker release, followed by Azure. The [product specification](docs/product/PRODUCT_SPEC.md) defines the intended workflow and completion criteria; the [roadmap](docs/product/ROADMAP.md) orders the work. The first increment is a read-only release-preflight control. The web application, authenticated approvals, Docker stack, Power BI model and AI integrations are still planned.
+The finance platform is being developed toward a complete local Docker release, followed by Azure. The [product specification](docs/product/PRODUCT_SPEC.md) defines completion criteria; the [roadmap](docs/product/ROADMAP.md) orders the work.
+
+**M1 now runs locally:** PostgreSQL, FastAPI, a durable worker and migrations. Start with `./scripts/dev-up.sh`, then run `python3 scripts/smoke_runtime.py`. Open http://localhost:8000/docs for the API console. See [runtime setup and limits](docs/product/M1_RUNTIME.md). Only built-in synthetic scenarios are accepted. Authentication, user-facing uploads, approval UI, Power BI and AI integrations remain later milestones.
 
 ## The other half of this repository
 

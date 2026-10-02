@@ -27,16 +27,8 @@ RUN_RULES = {
 }
 
 
-def assess(db_path: Path, run_id: str) -> dict:
-    """Return deterministic blockers from one read transaction; never mutate data.
-
-    The expected-partition manifest is an input contract, not a certification
-    that all real-world data arrived. Full publication adds input/snapshot hashes,
-    authenticated independent approval, warning decisions and atomic persistence.
-    """
-    path = Path(db_path).resolve()
-    if not path.is_file():
-        raise FileNotFoundError(path)
+def assess_evidence(status, partitions, rows, run_id: str) -> dict:
+    """Evaluate the same evidence contract for SQLite and PostgreSQL adapters."""
     result = dict(run_id=run_id, policy_version=POLICY_VERSION,
                   eligible_for_submission=False, expected_checks=0,
                   observed_checks=0, blockers=[])
@@ -45,45 +37,53 @@ def assess(db_path: Path, run_id: str) -> dict:
     def block(code, **context):
         blockers.append(dict(code=code, **context))
 
+    if status is None:
+        block('UNKNOWN_RUN')
+        return result
+    if status != 'READY_FOR_REVIEW':
+        block('RUN_NOT_READY', status=status)
+    if not partitions:
+        block('NO_EXPECTED_PARTITIONS')
+    expected = {(rule, version, 'ALL', 'ALL') for rule, version in RUN_RULES.items()}
+    expected.update(('DQ_MISSING_MARKET_FEED', 'v1', r['market_id'], r['month_start']) for r in partitions)
+    result['expected_checks'] = len(expected)
+    result['observed_checks'] = len(rows)
+    seen = set()
+    for row in rows:
+        key = (row['rule_id'], row['rule_version'], row['market_id'], row['month_start'])
+        context = dict(rule_id=key[0], rule_version=key[1], market_id=key[2], month_start=key[3])
+        if key in seen:
+            block('DUPLICATE_CHECK', **context)
+        seen.add(key)
+        if key not in expected:
+            block('UNEXPECTED_CHECK', **context)
+        # No warning disposition mechanism exists yet. Fail closed even if
+        # somebody has written ACCEPTED_WITH_REASON without evidence.
+        if (row['severity'] != 'BLOCKING' or row['disposition'] != 'PASS'
+                or row['failing_row_count'] != 0):
+            block('RULE_NOT_PASSED', **context, disposition=row['disposition'])
+    for rule, version, market, month in sorted(expected - seen):
+        block('MISSING_CHECK', rule_id=rule, rule_version=version,
+              market_id=market, month_start=month)
+    result['eligible_for_submission'] = not blockers
+    return result
+
+
+def assess(db_path: Path, run_id: str) -> dict:
+    """Read SQLite evidence in one transaction without changing the database."""
+    path = Path(db_path).resolve()
+    if not path.is_file():
+        raise FileNotFoundError(path)
     conn = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)
     conn.row_factory = sqlite3.Row
     try:
         conn.execute('BEGIN')
         run = conn.execute('SELECT status FROM pipeline_run WHERE run_id=?', (run_id,)).fetchone()
-        if run is None:
-            block('UNKNOWN_RUN')
-            return result
-        if run['status'] != 'READY_FOR_REVIEW':
-            block('RUN_NOT_READY', status=run['status'])
         partitions = conn.execute(
             "SELECT market_id, month_start FROM expected_partition WHERE run_id=? AND entity='claims' ORDER BY market_id, month_start",
             (run_id,)).fetchall()
-        if not partitions:
-            block('NO_EXPECTED_PARTITIONS')
-        expected = {(rule, version, 'ALL', 'ALL') for rule, version in RUN_RULES.items()}
-        expected.update(('DQ_MISSING_MARKET_FEED', 'v1', r['market_id'], r['month_start']) for r in partitions)
         rows = conn.execute('SELECT * FROM dq_result WHERE run_id=? ORDER BY rule_id, rule_version, market_id, month_start', (run_id,)).fetchall()
-        result['expected_checks'] = len(expected)
-        result['observed_checks'] = len(rows)
-        seen = set()
-        for row in rows:
-            key = (row['rule_id'], row['rule_version'], row['market_id'], row['month_start'])
-            context = dict(rule_id=key[0], rule_version=key[1], market_id=key[2], month_start=key[3])
-            if key in seen:
-                block('DUPLICATE_CHECK', **context)
-            seen.add(key)
-            if key not in expected:
-                block('UNEXPECTED_CHECK', **context)
-            # No warning disposition mechanism exists yet. Fail closed even if
-            # somebody has written ACCEPTED_WITH_REASON without evidence.
-            if (row['severity'] != 'BLOCKING' or row['disposition'] != 'PASS'
-                    or row['failing_row_count'] != 0):
-                block('RULE_NOT_PASSED', **context, disposition=row['disposition'])
-        for rule, version, market, month in sorted(expected - seen):
-            block('MISSING_CHECK', rule_id=rule, rule_version=version,
-                  market_id=market, month_start=month)
-        result['eligible_for_submission'] = not blockers
-        return result
+        return assess_evidence(run['status'] if run else None, partitions, rows, run_id)
     finally:
         conn.close()
 
