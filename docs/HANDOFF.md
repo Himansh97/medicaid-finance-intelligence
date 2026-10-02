@@ -4,7 +4,21 @@ Last updated: 2026-09-30
 
 ## User objective and authorized scope
 
-Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. Phase 1 documentation, the subsequent synthetic pipeline and public SDP track, and the September 30 audit repairs are authorized. The latest request authorizes a detailed complete-product plan and starting implementation; the user selected local Docker first, then Azure. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+Build a Medicaid Finance Intelligence & Reporting Automation portfolio project that supports learning while building. Phase 1 documentation, the subsequent synthetic pipeline and public SDP track, and the September 30 audit repairs are authorized. The latest request authorizes merging PR #2 and implementing M1; the user selected local Docker first, then Azure. Design for cross-market finance reporting, quality controls, variance/anomaly review, Power BI, and a later AI layer that explains only validated outputs.
+
+## M1 local runtime — 2026-10-01
+
+PR #2 was merged as dc43626. M1 code is on feat/m1-runtime, with usage in [M1_RUNTIME.md](product/M1_RUNTIME.md). The PostgreSQL adapter executes canonical finance SQL natively, compares clean/defective scenarios against SQLite, and shares preflight policy through assess_evidence. Each job uses a private run_UUID schema to isolate fixed fixture keys; this is not a scalable multi-tenant storage claim.
+
+FastAPI exposes loopback-only synthetic job submission/status/results, quality, KPIs and preflight. Alembic creates the durable jobs table. Worker claim leases, fencing tokens, bounded retries and atomic result transactions prevent duplicate/stale publication. No upload/authentication/approval endpoints are implemented. API requests accept only clean/defective built-in scenarios.
+
+Docker Compose runs PostgreSQL 16.15, migration, API and worker. Bootstrap generates a private ignored local password. PostgreSQL has no host port and API binds 127.0.0.1:8000. Interactive API at http://localhost:8000/docs. Local Docker is running; do not stop unrelated containers or delete volumes. The temporary native PostgreSQL test cluster at /tmp/medicaid-m1-pg used port 55439 and was stopped after verification; the Docker product stack remains running.
+
+Verification: full suite with real PostgreSQL: 189 passed, ten optional raw-CMS checks skipped. One upstream Starlette/httpx deprecation warning remains. Individual native parity tests cover all KPI views, complete quality rows, counts, preflight, replay, transaction rollback and BIGINT cents. Job tests cover concurrency/idempotency, expired-token fencing, retries and fresh/repeated migration. Live Docker smoke processed clean (READY_FOR_REVIEW) and defective (FAILED with three blockers) scenarios successfully. Those finance outcomes are distinct from successful job execution.
+
+Final branch review is by the parent agent; the separate final reviewer could not run because of its usage limit. Module agents validated their own implementations. No independent final-review completion is claimed.
+
+Next: review/merge M1 PR, then M2 identity, role/market authorization and supported synthetic uploads. React/reverse proxy and local identity provider move into M2 when their actual flows exist; M1 has an API console, not a placeholder web product. No cloud resources were created. Existing per-job finance schemas are retained rather than upgraded in place; future shared-fact/storage migration and real release certification remain separate work.
 
 ## Product foundation — current work
 
@@ -284,3 +298,5 @@ Verification: `python -m pytest -q` → 164 passed, 10 skipped (optional local C
 RTK.md remains absent from the checked workspace; no content has been assumed.
 
 Final audit verification: clean tracked-file snapshot also passed 164 tests with 10 optional integration skips; dependency check found no conflicts. Independent review found no critical/important defects and separately passed all 14 audit regressions.
+
+Live recovery check: queued a clean job while the worker was stopped, restarted it, observed one successful attempt, repeated submission with the same key, and reran the migration. Job ID and stored results were unchanged.

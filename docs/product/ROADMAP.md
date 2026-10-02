@@ -4,7 +4,9 @@ Local Docker first, then Azure. Status labels reflect verified implementation, n
 
 ## Work completed in this branch
 
-M0 specification and roadmap written. Read-only preflight implemented with 13 tests. Full suite: 177 passed, ten optional source checks skipped. Mutation removing blockers caused nine expected failures. Population rule v3 excludes legitimate out-of-cohort records from failure counts; regression verifies KPI exclusion. Docker executable detected, daemon responsiveness not verified. M1 and later remain planned.
+M0 merged as dc43626. M1 core runtime is implemented: native PostgreSQL parity, Alembic queue migration, FastAPI synthetic job endpoints, durable worker and Docker Compose. Full suite with PostgreSQL: 189 passed, ten optional source checks skipped. Live Docker clean/defective workflows passed. See [runtime guide](M1_RUNTIME.md).
+
+M1 clarification: web/reverse proxy and local OIDC provider will be added with their actual M2 authenticated flows. M1 supplies a local API console, not placeholder web/identity containers. Financial fixture tables are isolated per job and instantiated transactionally; Alembic versions shared runtime operations. Future shared-storage migrations remain explicit work. M2 and later remain planned.
 
 ## Current baseline
 
@@ -40,7 +42,7 @@ Files: `src/releases/preflight.py`, `tests/test_release_preflight.py`, this spec
 
 ### M1 — runtime and persistence
 
-First inventory every SQLite-only SQL feature and choose explicit PostgreSQL equivalents. Preserve integer cents and tested result grains. Add Alembic migrations and a database adapter; keep domain code independent of HTTP. FastAPI endpoints start with health/readiness, run status and preflight. Add a database-backed job table with claim leases, retry limits, idempotency and failure reasons. Use transaction boundaries around state transitions. Compose starts PostgreSQL/API/worker/web/identity services; add `.env.example`, bootstrap and health checks. CI runs PostgreSQL integration tests and fresh startup. Pin supported versions after checking official documentation and available runtimes.
+First inventory every SQLite-only SQL feature and choose explicit PostgreSQL equivalents. Preserve integer cents and tested result grains. Add Alembic migrations and a database adapter; keep domain code independent of HTTP. FastAPI endpoints start with health/readiness, run status and preflight. Add a database-backed job table with claim leases, retry limits, idempotency and failure reasons. Use transaction boundaries around state transitions. Compose starts PostgreSQL/migration/API/worker services (web/identity begins with M2); add `.env.example`, bootstrap and health checks. CI runs PostgreSQL integration tests and fresh startup. Pin supported versions after checking official documentation and available runtimes.
 
 ### M2–M3 — usable, authorized workflow
 

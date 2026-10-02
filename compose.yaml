@@ -1,0 +1,52 @@
+name: medicaid-finance
+x-runtime: &runtime
+  build: .
+  environment:
+    APP_ENV: local
+    DATABASE_URL: postgresql://medicaid:${POSTGRES_PASSWORD:?Run scripts/dev-up.sh first}@db:5432/medicaid
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+services:
+  db:
+    image: postgres:16.15
+    environment:
+      POSTGRES_USER: medicaid
+      POSTGRES_DB: medicaid
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/dev-up.sh first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U medicaid -d medicaid']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    <<: *runtime
+    command: [alembic, upgrade, head]
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    <<: *runtime
+    ports:
+      - '127.0.0.1:${API_PORT:-8000}:8000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+  worker:
+    <<: *runtime
+    command: [python, -m, src.runtime.worker]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+volumes:
+  postgres_data:
